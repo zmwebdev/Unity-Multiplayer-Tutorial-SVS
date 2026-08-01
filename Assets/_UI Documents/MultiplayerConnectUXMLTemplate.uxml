@@ -1,0 +1,7 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 0; align-items: flex-start;">
+        <ui:Button text="Start Host" name="ButtonHost" style="width: 200px; height: 50px; font-size: 30px; background-color: rgb(0, 179, 255);"/>
+        <ui:Button text="Disconnect" name="ButtonDisconnect" enabled="false" style="width: 200px; height: 50px; font-size: 30px;"/>
+        <ui:Button text="Start Client" name="ButtonClient" style="width: 200px; height: 50px; font-size: 30px; background-color: rgb(255, 128, 65);"/>
+    </ui:VisualElement>
+</ui:UXML>
