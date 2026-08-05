@@ -30,7 +30,7 @@ public class GameManager : NetworkBehaviour
 
     private void DisconnectClient()
     {
-        m_multiplayerUI.DisableButtons();
+        m_multiplayerUI.EnableButtons();
         NetworkManager.Shutdown();
     }
 }

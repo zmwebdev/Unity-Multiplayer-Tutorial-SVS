@@ -19,9 +19,22 @@ public class MyPlayerInput : NetworkBehaviour
     // Update is called once per frame
     private void Update()
     {
+        if (IsOwner != true)
+        {
+            return;
+        }
         // read from the input action reference
         m_rawInput = m_movementReference.action.ReadValue<Vector2>();
         // smooth the input (only for keyboard)
         MovementInput = Vector2.MoveTowards(MovementInput, m_rawInput, Time.deltaTime / m_smoothTime);
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            OnPickUpPressed?.Invoke();
+        }
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            OnInteractPressed?.Invoke();
+        }
     }
 }
