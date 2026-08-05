@@ -1766,9 +1766,9 @@ MonoBehaviour:
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 0
+  m_InScenePlaced: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -1940,6 +1940,22 @@ PrefabInstance:
     - target: {fileID: 3285824260014196185, guid: 0d813fa26ac4fa24889ecc38506d5edd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 55.601
+      objectReference: {fileID: 0}
+    - target: {fileID: 9122578418494018325, guid: 0d813fa26ac4fa24889ecc38506d5edd, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9122578418494018325, guid: 0d813fa26ac4fa24889ecc38506d5edd, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 4045803892
+      objectReference: {fileID: 0}
+    - target: {fileID: 9122578418494018325, guid: 0d813fa26ac4fa24889ecc38506d5edd, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9122578418494018325, guid: 0d813fa26ac4fa24889ecc38506d5edd, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1786549923
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2133,6 +2149,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -2304934119802580392, guid: 0f593c205eb9e5a48825e85731d1f215, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2304934119802580392, guid: 0f593c205eb9e5a48825e85731d1f215, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3307743345
+      objectReference: {fileID: 0}
+    - target: {fileID: -2304934119802580392, guid: 0f593c205eb9e5a48825e85731d1f215, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2304934119802580392, guid: 0f593c205eb9e5a48825e85731d1f215, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2533906547
+      objectReference: {fileID: 0}
     - target: {fileID: -1926054152944378366, guid: 0f593c205eb9e5a48825e85731d1f215, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 1224988709

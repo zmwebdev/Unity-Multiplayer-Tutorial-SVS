@@ -1,11 +1,10 @@
-using System;
 using Unity.Netcode;
 using UnityEngine;
 
 public abstract class PickableBase : NetworkBehaviour, IInteractable
 {
     // https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html
-    private NetworkVariable<bool> m_isAvailable = new(
+    protected NetworkVariable<bool> m_isAvailable = new(
         true,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
@@ -49,7 +48,7 @@ public abstract class PickableBase : NetworkBehaviour, IInteractable
 
     protected abstract void OnPickedUp();
 
-    public void ToogleSelection(bool isSelected)
+    public void ToggleSelection(bool isSelected)
     {
         if (m_outline != null)
         {

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public interface IInteractable
 {
-    void ToogleSelection(bool isSelected);
+    void ToggleSelection(bool isSelected);
     NetworkObject NetworkObject { get; }
         
 }

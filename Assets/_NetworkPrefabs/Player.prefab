@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4743256779378356117}
+  - component: {fileID: 5221454545061801746}
   m_Layer: 0
   m_Name: Detector
   m_TagString: Untagged
@@ -31,6 +32,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2084376289498346152}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5221454545061801746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1108873713408457451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64e42c838a055ec409d46cb199c3c7ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionDetector
+  m_detectionRadius: 3
+  m_detectionAngle: 60
+  m_pickupLayer:
+    serializedVersion: 2
+    m_Bits: 72
 --- !u!1 &1855797244298458106
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,6 +186,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   m_playerInput: {fileID: -6671459728194777606}
   m_agentMover: {fileID: 6895321537121219383}
+  m_interactionDetector: {fileID: 5221454545061801746}
+  m_animator: {fileID: 637217615066948756}
+  m_animationEvents: {fileID: 5516115944685011280}
 --- !u!114 &1024114663036168110
 MonoBehaviour:
   m_ObjectHideFlags: 0
