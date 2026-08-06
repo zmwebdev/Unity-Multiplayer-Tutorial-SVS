@@ -4,6 +4,8 @@ Make Your First Multiplayer Game in Unity 6 - Complete Tutorial Series https://w
 
 https://github.com/SunnyValleyStudio/multiplayer-basics-unity6-coop-harvest-game
 
+https://kaylousberg.itch.io/kaykit-character-animations
+
 Unity Docs: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html
 
 ## Documentation

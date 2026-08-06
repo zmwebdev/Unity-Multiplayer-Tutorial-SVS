@@ -89,12 +89,21 @@ public class PlayerController : NetworkBehaviour
     override public void OnNetworkDespawn()
     {
         m_heldObjectType.OnValueChanged -= HandleHeldItemChanged;
-        base.OnNetworkDespawn();
+
+        // Avoid sending RPCs during despawn; this object may already be unspawned.
+        // Tutorialean beste modu batean agertzen da, baino, errorea ematen du, beraz, 
+        // ez da RPC bidali behar despawn denean.
+        if (IsServer)
+        {
+            DropCurrentItem();
+        }
+
         if (IsOwner)
         {
             m_animationEvents.OnInteract -= HandleInteractAction;
             m_animationEvents.OnAnimationDone -= HandleAnimationDone;
         }
+        base.OnNetworkDespawn();
     }
 
     private void HandleAnimationDone()
@@ -133,12 +142,44 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
+        if (m_heldObjectType.Value != ObjectType.None)
+        {
+            DropCurrentItem();
+        }
         if (pickableItem is PickableTool)
         {
             m_heldNetworkObjectId.Value = networkObjectId;
         }
 
+        m_heldObjectType.Value = pickableItem.objectType;
+
         pickableItem.PickUp();
+    }
+
+    private void DropCurrentItem()
+    {
+        if (IsServer == false)
+        {
+            return;
+        }
+        if (m_heldObjectType.Value == ObjectType.None)
+        {
+            m_heldNetworkObjectId.Value = ulong.MaxValue;
+            return;
+        }
+        if (m_heldObjectType.Value is ObjectType.Axe or ObjectType.PickAxe)
+        {
+            if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                m_heldNetworkObjectId.Value, out NetworkObject target))
+            {
+                if (target.TryGetComponent<PickableTool>(out PickableTool pickableItem))
+                {
+                    pickableItem.Drop(transform.position);
+                }
+            }
+        }
+        m_heldObjectType.Value = ObjectType.None;
+        m_heldNetworkObjectId.Value = ulong.MaxValue;
     }
 
     private void Update()
