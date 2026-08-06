@@ -2,6 +2,9 @@
 
 This document explains how multiplayer is implemented in this Unity project using Netcode for GameObjects.
 
+Reference source repository:
+- SunnyValleyStudio multiplayer tutorial repo: [multiplayer-basics-unity6-coop-harvest-game](https://github.com/SunnyValleyStudio/multiplayer-basics-unity6-coop-harvest-game)
+
 ## 1. Multiplayer Stack Used
 
 - Unity Netcode for GameObjects
@@ -11,10 +14,10 @@ This document explains how multiplayer is implemented in this Unity project usin
 - Rpc (Server RPCs) for client-to-server actions
 
 Official docs:
-- Netcode manual: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html
-- NetworkBehaviour: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkbehavior.html
-- NetworkVariable: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html
-- RPC: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html
+- Netcode manual: [Netcode for GameObjects Manual](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html)
+- NetworkBehaviour: [NetworkBehaviour](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkbehavior.html)
+- NetworkVariable: [NetworkVariable](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html)
+- RPC: [RPC](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html)
 
 ## 2. High-Level Architecture
 
@@ -37,8 +40,8 @@ flowchart LR
 
 ### 3.1 Session Control
 
-- File: Assets/_Scripts/GameManager.cs
-- File: Assets/_Scripts/Premade Sctips/MultiplayerUI.cs
+- File: [Assets/_Scripts/GameManager.cs](Assets/_Scripts/GameManager.cs)
+- File: [Assets/_Scripts/Premade Sctips/MultiplayerUI.cs](Assets/_Scripts/Premade%20Sctips/MultiplayerUI.cs)
 
 What happens:
 - UI buttons emit events (Start Host, Start Client, Disconnect).
@@ -51,7 +54,7 @@ Why this matters:
 
 ### 3.2 Ownership-Driven Input
 
-- File: Assets/_Scripts/MyPlayerInput.cs
+- File: [Assets/_Scripts/MyPlayerInput.cs](Assets/_Scripts/MyPlayerInput.cs)
 
 What happens:
 - Only the owning player processes input (`IsOwner` check).
@@ -65,7 +68,7 @@ Why this matters:
 
 ### 3.3 Player Interaction and Server Authority
 
-- File: Assets/_Scripts/PlayerController.cs
+- File: [Assets/_Scripts/PlayerController.cs](Assets/_Scripts/PlayerController.cs)
 
 What happens:
 - On spawn, interaction detector is initialized with ownership.
@@ -81,7 +84,7 @@ Why this matters:
 
 ### 3.4 Finding the Interactable Target
 
-- File: Assets/_Scripts/InteractionDetector.cs
+- File: [Assets/_Scripts/InteractionDetector.cs](Assets/_Scripts/InteractionDetector.cs)
 
 What happens:
 - Runs only for owner.
@@ -96,8 +99,8 @@ Why this matters:
 
 ### 3.5 Pickable Item Network State
 
-- File: Assets/_Scripts/PickableBase.cs
-- File: Assets/_Scripts/PickableTool.cs
+- File: [Assets/_Scripts/PickableBase.cs](Assets/_Scripts/PickableBase.cs)
+- File: [Assets/_Scripts/PickableTool.cs](Assets/_Scripts/PickableTool.cs)
 
 What happens:
 - Each pickable has `NetworkVariable<bool> m_isAvailable`.
@@ -112,7 +115,7 @@ Why this matters:
 
 ### 3.6 Owner Camera Behavior
 
-- File: Assets/_Scripts/CameraFollow.cs
+- File: [Assets/_Scripts/CameraFollow.cs](Assets/_Scripts/CameraFollow.cs)
 
 What happens:
 - On spawn, only owner camera starts following local player.

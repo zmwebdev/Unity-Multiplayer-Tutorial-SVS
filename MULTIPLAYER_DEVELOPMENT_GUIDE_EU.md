@@ -2,6 +2,9 @@
 
 Dokumentu honek azaltzen du nola dagoen inplementatuta multiplayer sistema proiektu honetan, Unity Netcode for GameObjects erabiliz.
 
+Erreferentzia iturburu errepositorioa:
+- SunnyValleyStudio multiplayer tutorial repo: [multiplayer-basics-unity6-coop-harvest-game](https://github.com/SunnyValleyStudio/multiplayer-basics-unity6-coop-harvest-game)
+
 ## 1. Erabilitako Multiplayer Stack-a
 
 - Unity Netcode for GameObjects
@@ -11,10 +14,10 @@ Dokumentu honek azaltzen du nola dagoen inplementatuta multiplayer sistema proie
 - Rpc (Server RPC) bezeroak zerbitzariari ekintzak eskatzeko
 
 Dokumentazio ofiziala:
-- Netcode manuala: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html
-- NetworkBehaviour: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkbehavior.html
-- NetworkVariable: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html
-- RPC: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html
+- Netcode manuala: [Netcode for GameObjects Manual](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html)
+- NetworkBehaviour: [NetworkBehaviour](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkbehavior.html)
+- NetworkVariable: [NetworkVariable](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html)
+- RPC: [RPC](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html)
 
 ## 2. Maila Altuko Arkitektura
 
@@ -37,8 +40,8 @@ flowchart LR
 
 ### 3.1 Saio Kontrola
 
-- File: Assets/_Scripts/GameManager.cs
-- File: Assets/_Scripts/Premade Sctips/MultiplayerUI.cs
+- File: [Assets/_Scripts/GameManager.cs](Assets/_Scripts/GameManager.cs)
+- File: [Assets/_Scripts/Premade Sctips/MultiplayerUI.cs](Assets/_Scripts/Premade%20Sctips/MultiplayerUI.cs)
 
 Zer gertatzen da:
 - UI botoiek event-ak jaurtitzen dituzte (Start Host, Start Client, Disconnect).
@@ -51,7 +54,7 @@ Zergatik da garrantzitsua:
 
 ### 3.2 Ownership-ean Oinarritutako Input-a
 
-- File: Assets/_Scripts/MyPlayerInput.cs
+- File: [Assets/_Scripts/MyPlayerInput.cs](Assets/_Scripts/MyPlayerInput.cs)
 
 Zer gertatzen da:
 - Jabea den jokalariak bakarrik prozesatzen du input-a (IsOwner check).
@@ -65,7 +68,7 @@ Zergatik da garrantzitsua:
 
 ### 3.3 Jokalariaren Interakzioa eta Zerbitzariaren Autoritatea
 
-- File: Assets/_Scripts/PlayerController.cs
+- File: [Assets/_Scripts/PlayerController.cs](Assets/_Scripts/PlayerController.cs)
 
 Zer gertatzen da:
 - Spawn egitean, interaction detector-a ownershiparekin hasieratzen da.
@@ -81,7 +84,7 @@ Zergatik da garrantzitsua:
 
 ### 3.4 Interactable Helburua Aurkitzea
 
-- File: Assets/_Scripts/InteractionDetector.cs
+- File: [Assets/_Scripts/InteractionDetector.cs](Assets/_Scripts/InteractionDetector.cs)
 
 Zer gertatzen da:
 - Jabearentzat bakarrik exekutatzen da.
@@ -96,8 +99,8 @@ Zergatik da garrantzitsua:
 
 ### 3.5 Pickable Objektuen Sareko Egoera
 
-- File: Assets/_Scripts/PickableBase.cs
-- File: Assets/_Scripts/PickableTool.cs
+- File: [Assets/_Scripts/PickableBase.cs](Assets/_Scripts/PickableBase.cs)
+- File: [Assets/_Scripts/PickableTool.cs](Assets/_Scripts/PickableTool.cs)
 
 Zer gertatzen da:
 - Pickable bakoitzak NetworkVariable<bool> m_isAvailable dauka.
@@ -112,7 +115,7 @@ Zergatik da garrantzitsua:
 
 ### 3.6 Jabe Camararen Portaera
 
-- File: Assets/_Scripts/CameraFollow.cs
+- File: [Assets/_Scripts/CameraFollow.cs](Assets/_Scripts/CameraFollow.cs)
 
 Zer gertatzen da:
 - Spawn-ean, jabearen camarak bakarrik jarraitzen du tokiko jokalaria.
