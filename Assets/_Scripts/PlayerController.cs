@@ -10,7 +10,14 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private InteractionDetector m_interactionDetector;
     [SerializeField] private Animator m_animator;
     [SerializeField] private AnimationEvents m_animationEvents;
+
     private bool m_isInteracting;
+    [SerializeField] private GameObject m_axeModel, m_pickAxeModel, m_woodModel, m_stoneModel;
+
+    // This is the network variable that will hold the network object id 
+    // of the pickable item that the player is currently holding
+    private NetworkVariable<ulong> m_heldNetworkObjectId = new(ulong.MaxValue);
+    private NetworkVariable<ObjectType> m_heldObjectType = new(ObjectType.None);
 
     private void OnEnable()
     {
@@ -53,6 +60,9 @@ public class PlayerController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         m_interactionDetector.Initialize(IsOwner);
+        m_heldObjectType.OnValueChanged += HandleHeldItemChanged;
+        HandleItemOnJoin();
+
         if (IsOwner)
         {
             m_animationEvents.OnInteract += HandleInteractAction;
@@ -60,8 +70,25 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    private void HandleItemOnJoin()
+    {
+        if (m_heldObjectType.Value != ObjectType.None)
+        {
+            HandleHeldItemChanged(ObjectType.None, m_heldObjectType.Value);
+        }
+    }
+
+    private void HandleHeldItemChanged(ObjectType previousValue, ObjectType newValue)
+    {
+        m_axeModel.SetActive(newValue == ObjectType.Axe);
+        m_pickAxeModel.SetActive(newValue == ObjectType.PickAxe);
+        m_woodModel.SetActive(newValue == ObjectType.Wood);
+        m_stoneModel.SetActive(newValue == ObjectType.Stone);
+    }
+
     override public void OnNetworkDespawn()
     {
+        m_heldObjectType.OnValueChanged -= HandleHeldItemChanged;
         base.OnNetworkDespawn();
         if (IsOwner)
         {
@@ -80,7 +107,7 @@ public class PlayerController : NetworkBehaviour
         if (m_interactionDetector.ClosestInteractable is PickableBase)
         {
             RequestPickUpServerRpc(
-                m_interactionDetector.ClosestInteractable.NetworkObject.NetworkObjectId);            
+                m_interactionDetector.ClosestInteractable.NetworkObject.NetworkObjectId);
         }
 
         PickableBase pickable = m_interactionDetector.ClosestInteractable as PickableBase;
@@ -95,9 +122,9 @@ public class PlayerController : NetworkBehaviour
     {
         if (!NetworkManager.SpawnManager.SpawnedObjects
             .TryGetValue(networkObjectId, out NetworkObject target))
-            {
-                return;
-            }
+        {
+            return;
+        }
         if (!target.TryGetComponent<PickableBase>(out PickableBase pickableItem))
         {
             return;
@@ -106,6 +133,11 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
+        if (pickableItem is PickableTool)
+        {
+            m_heldNetworkObjectId.Value = networkObjectId;
+        }
+
         pickableItem.PickUp();
     }
 

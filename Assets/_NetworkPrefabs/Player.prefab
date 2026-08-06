@@ -143,7 +143,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3363183712
+  GlobalObjectIdHash: 2032217251
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -190,6 +190,10 @@ MonoBehaviour:
   m_interactionDetector: {fileID: 5221454545061801746}
   m_animator: {fileID: 637217615066948756}
   m_animationEvents: {fileID: 5516115944685011280}
+  m_axeModel: {fileID: 0}
+  m_pickAxeModel: {fileID: 0}
+  m_woodModel: {fileID: 0}
+  m_stoneModel: {fileID: 0}
 --- !u!114 &1024114663036168110
 MonoBehaviour:
   m_ObjectHideFlags: 0
