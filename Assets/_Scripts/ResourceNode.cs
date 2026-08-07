@@ -79,7 +79,10 @@ public class ResourceNode : NetworkBehaviour, IInteractable
 
     public void ToggleSelection(bool isSelected)
     {
-        throw new System.NotImplementedException();
+        if (m_selectionOutline != null)
+        {
+            m_selectionOutline.ToggleOutline(isSelected);
+        }
     }
 
 
