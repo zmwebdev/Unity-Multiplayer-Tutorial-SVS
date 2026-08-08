@@ -67,5 +67,13 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Unity-Multiplayer-Tutorial-SVS.slnx"
+    "dotnet.defaultSolution": "Unity-Multiplayer-Tutorial-SVS.slnx",
+    "editor.snippetSuggestions": "top",
+    "editor.suggest.showSnippets": true,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": false
+    },
+    "editor.suggestSelection": "first"
 }

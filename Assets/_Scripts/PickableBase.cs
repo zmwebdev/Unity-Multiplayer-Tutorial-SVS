@@ -38,10 +38,11 @@ public abstract class PickableBase : NetworkBehaviour, IInteractable
 
     public void PickUp()
     {
-        if (IsServer == false)
+        if (IsServer == false || IsSpawned == false || m_isAvailable.Value == false)
         {
             return;
         }
+
         m_isAvailable.Value = false;
         OnPickedUp();
     }

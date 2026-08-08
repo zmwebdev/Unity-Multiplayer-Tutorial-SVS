@@ -14,10 +14,16 @@ public class PlayerController : NetworkBehaviour
     private bool m_isInteracting, m_isChopping;
     [SerializeField] private GameObject m_axeModel, m_pickAxeModel, m_woodModel, m_stoneModel;
 
+    private ResourceSpawner m_resourceSpawner;
+
     // This is the network variable that will hold the network object id 
     // of the pickable item that the player is currently holding
     private NetworkVariable<ulong> m_heldNetworkObjectId = new(ulong.MaxValue);
     private NetworkVariable<ObjectType> m_heldObjectType = new(ObjectType.None);
+
+    private void Awake() {
+        m_resourceSpawner = FindAnyObjectByType<ResourceSpawner>();
+    }
 
     private void OnEnable()
     {
@@ -141,17 +147,17 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleInteractAction()
     {
-        if (m_interactionDetector.ClosestInteractable is PickableBase)
+        if (IsOwner == false)
         {
-            RequestPickUpServerRpc(
-                m_interactionDetector.ClosestInteractable.NetworkObject.NetworkObjectId);
+            return;
         }
 
-        PickableBase pickable = m_interactionDetector.ClosestInteractable as PickableBase;
-        if (pickable != null)
+        if (m_interactionDetector.ClosestInteractable is not PickableBase pickable)
         {
-            pickable.PickUp();
+            return;
         }
+
+        RequestPickUpServerRpc(pickable.NetworkObject.NetworkObjectId);
     }
 
     [Rpc(SendTo.Server)]
@@ -206,6 +212,11 @@ public class PlayerController : NetworkBehaviour
                 }
             }
         }
+        else
+        {
+            m_resourceSpawner.SpawnResource(m_heldObjectType.Value, transform.position);
+        }
+
         m_heldObjectType.Value = ObjectType.None;
         m_heldNetworkObjectId.Value = ulong.MaxValue;
     }

@@ -17,6 +17,13 @@ public class ResourceNode : NetworkBehaviour, IInteractable
     // network variable m_health to store health
     private NetworkVariable<int> m_health = new NetworkVariable<int>(3);
 
+    
+    private ResourceSpawner m_resourceSpawner;
+
+    private void Awake() {
+        m_resourceSpawner = FindAnyObjectByType<ResourceSpawner>();
+    }
+
     // initialize the health of the resource node if the server spawns it
     public override void OnNetworkSpawn()
     {
@@ -47,7 +54,7 @@ public class ResourceNode : NetworkBehaviour, IInteractable
                     Vector2 offset = UnityEngine.Random.insideUnitCircle;
                     position.x += offset.x;
                     position.z += offset.y;
-                    Debug.Log("Spawning");
+                    m_resourceSpawner.SpawnResource(m_producedObjectType, position);
                 }
             }
         }
