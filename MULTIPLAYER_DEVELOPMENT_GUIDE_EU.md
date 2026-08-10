@@ -123,20 +123,20 @@ Zergatik da garrantzitsua:
 - Zerbitzariak kontrolatutako boolean bakar batek ikusgarritasuna/disponibilitatea gidatzen du sare osoan.
 - Client guztiek egoera bera ikusten dute.
 
-### 3.6 Baliabide Nodosen Harrastea
+### 3.6 Baliabide Nodoen Bilketa (Harvesting)
 
 - File: [Assets/_Scripts/ResourceNode.cs](Assets/_Scripts/ResourceNode.cs)
 
 Zer gertatzen da:
 - Nodo bakoitzak NetworkVariable<int> m_health dauka.
 - Zerbitzariak hasieratzen du osasuna.
-- Harrastean, zerbitzariak osasuna murrizten du.
+- Bilketan, zerbitzariak osasuna murrizten du.
 - Osasuna 0 bada, nodoa desaktibatzen da eta baliabideak sortzen dira.
 - Baliabideak ResourceSpawner bidez spawneatzen dira.
 
 Zergatik da garrantzitsua:
 - Harkaitz/egur bezalako baliabideak sarean sinkronizatuta sortzen dira.
-- Harrastearen logika zerbitzariak kontrolatzen du.
+- Bilketaren logika zerbitzariak kontrolatzen du.
 
 ### 3.7 Baliabideen Sortzea Zerbitzaritik
 
@@ -214,7 +214,7 @@ sequenceDiagram
     Pallet-->>Owner: Egoera sinkronizatua
 ```
 
-## 6. Fluxu Osoa: Baliabidea Harrastea
+## 6. Fluxu Osoa: Baliabidea Bilketa
 
 ```mermaid
 sequenceDiagram
