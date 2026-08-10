@@ -1,6 +1,6 @@
 # Multiplayer Garapen Gida (Ikasleak)
 
-Dokumentu honek azaltzen du nola dagoen inplementatuta multiplayer sistema proiektu honetan, Unity Netcode for GameObjects erabiliz.
+Dokumentu honek proiektu honetako multiplayer sistema azaltzen du, Unity Netcode for GameObjects erabiliz. Azken urratsetan ezaugarri gehiago gehitu dira: jokalariak sortzea, interakzioa, baliabideak biltzea, paleteetan uztea, jokalariaren izena erakustea eta irabazteko baldintza.
 
 Erreferentzia iturburu errepositorioa:
 - SunnyValleyStudio multiplayer tutorial repo: [multiplayer-basics-unity6-coop-harvest-game](https://github.com/SunnyValleyStudio/multiplayer-basics-unity6-coop-harvest-game)
@@ -12,6 +12,7 @@ Erreferentzia iturburu errepositorioa:
 - NetworkBehaviour (sareko scriptentzat)
 - NetworkVariable (egoera sinkronizatzeko)
 - Rpc (Server RPC) bezeroak zerbitzariari ekintzak eskatzeko
+- Unity UI Toolkit (UIDocument) jokalariaren UIa erakusteko
 
 Dokumentazio ofiziala:
 - Netcode manuala: [Netcode for GameObjects Manual](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html)
@@ -30,13 +31,18 @@ flowchart LR
 
     PlayerInput[MyPlayerInput] --> PC[PlayerController]
     Detector[InteractionDetector] --> PC
-    PC --> SRPC[RequestPickUpServerRpc]
-    SRPC --> Pickable[PickableBase/PickableTool]
-    Pickable --> NV[NetworkVariable egoera]
-    NV --> AllClients[Egoera client guztietara sinkronizatua]
+    PC --> RPC1[RequestPickUpServerRpc]
+    PC --> RPC2[RequestGiveItemServerRpc]
+    PC --> RPC3[RequestResourceNodeInteractionServerRpc]
+    RPC1 --> Pickable[PickableBase / PickableTool]
+    RPC2 --> Pallet[ResourcePallet]
+    RPC3 --> Node[ResourceNode]
+    Node --> Spawner[ResourceSpawner]
+    Spawner --> Resources[Wood / Stone prefabs]
+    PC --> NameUI[PlayerNameUI]
 ```
 
-## 3. Multiplayer Script Nagusiak
+## 3. Inplementatutako Multiplayer Funtzionalitate Nagusiak
 
 ### 3.1 Saio Kontrola
 
@@ -44,13 +50,15 @@ flowchart LR
 - File: [Assets/_Scripts/Premade Sctips/MultiplayerUI.cs](Assets/_Scripts/Premade%20Sctips/MultiplayerUI.cs)
 
 Zer gertatzen da:
-- UI botoiek event-ak jaurtitzen dituzte (Start Host, Start Client, Disconnect).
-- GameManager-ek event horiek entzuten ditu.
+- UI botoiek Start Host, Start Client eta Disconnect ekitaldiak bidaltzen dituzte.
+- GameManager-ek ekitaldi hauek entzuten ditu.
 - GameManager-ek NetworkManager.StartHost(), StartClient() edo Shutdown() deitzen du.
+- Bezero berriak konektatzen direnean, jokalaria spawneatzen da.
+- Scene kargaren ondoren jokalariak automatiko sortzen dira.
 
 Zergatik da garrantzitsua:
-- UI eta sareko erantzukizunak banatzen ditu.
-- Hasierako fluxua erraz probatzeko aukera ematen du.
+- Sareko saioa kudeatzeko zentro bakarra daukagu.
+- Hasierako fluxua sinplea eta errepikagarria da.
 
 ### 3.2 Ownership-ean Oinarritutako Input-a
 
@@ -64,23 +72,25 @@ Zer gertatzen da:
 
 Zergatik da garrantzitsua:
 - Urruneko client-ek beste jokalariak kontrolatzea saihesten du.
-- Desinkronizazioak eta ekintza baliogabeak murrizten ditu.
+- Input ez-esanguratsuak eta desinkronizazioak murrizten ditu.
 
 ### 3.3 Jokalariaren Interakzioa eta Zerbitzariaren Autoritatea
 
 - File: [Assets/_Scripts/PlayerController.cs](Assets/_Scripts/PlayerController.cs)
 
 Zer gertatzen da:
-- Spawn egitean, interaction detector-a ownershiparekin hasieratzen da.
-- Pickup input-a baliozkoa bada, tokiko jokalariak interact animazioa hasten du.
-- Animazio event-ak interaction ekintza deitzen du.
-- Bezeroak RequestPickUpServerRpc(ulong networkObjectId) bidaltzen du.
-- Zerbitzariak helburua balidatu eta pickup aplikatzen du.
+- Spawn-ean, InteractionDetector hasieratzen da owned statusarekin.
+- Local jokalariak interact animazioa abiarazten du input baliagarria bada.
+- Animazio event-ak HandleInteractAction deitzen du.
+- Bezeroak hiru server RPC mota bidaltzen ditu:
+  - RequestPickUpServerRpc: pickable objektu bat hartzeko.
+  - RequestGiveItemServerRpc: objektua palete batera utitzeko.
+  - RequestResourceNodeInteractionServerRpc: baliabide nodoa harrasteko.
+- Zerbitzariak ekintza balidatzen eta exekutatzen du.
 
 Zergatik da garrantzitsua:
-- Bezeroak ekintza eskatzen du.
-- Zerbitzariak balidatu eta exekutatzen du.
-- Hau da multiplayer autoritatiboaren patroi estandarra.
+- Bezeroak ekintza eskatzen du, baina zerbitzariak agintzen du.
+- Hau da autoritaterako multiplayer patroia.
 
 ### 3.4 Interactable Helburua Aurkitzea
 
@@ -95,7 +105,7 @@ Zer gertatzen da:
 
 Zergatik da garrantzitsua:
 - Tokiko targeting portaera determinista ematen du.
-- Interakzio hautagaiaren logika eta pickup exekuzio logika bereizten ditu.
+- Interakzio hautagaiaren logika eta ekintza exekuzio logika bereizten ditu.
 
 ### 3.5 Pickable Objektuen Sareko Egoera
 
@@ -113,18 +123,63 @@ Zergatik da garrantzitsua:
 - Zerbitzariak kontrolatutako boolean bakar batek ikusgarritasuna/disponibilitatea gidatzen du sare osoan.
 - Client guztiek egoera bera ikusten dute.
 
-### 3.6 Jabe Camararen Portaera
+### 3.6 Baliabide Nodosen Harrastea
 
-- File: [Assets/_Scripts/CameraFollow.cs](Assets/_Scripts/CameraFollow.cs)
+- File: [Assets/_Scripts/ResourceNode.cs](Assets/_Scripts/ResourceNode.cs)
 
 Zer gertatzen da:
-- Spawn-ean, jabearen camarak bakarrik jarraitzen du tokiko jokalaria.
-- Despawn-ean, camara reset egiten da.
+- Nodo bakoitzak NetworkVariable<int> m_health dauka.
+- Zerbitzariak hasieratzen du osasuna.
+- Harrastean, zerbitzariak osasuna murrizten du.
+- Osasuna 0 bada, nodoa desaktibatzen da eta baliabideak sortzen dira.
+- Baliabideak ResourceSpawner bidez spawneatzen dira.
 
 Zergatik da garrantzitsua:
-- Client baten camara beste jokalari bati lotzea saihesten du.
+- Harkaitz/egur bezalako baliabideak sarean sinkronizatuta sortzen dira.
+- Harrastearen logika zerbitzariak kontrolatzen du.
 
-## 4. E Teklako Pickup Fluxu Osoa
+### 3.7 Baliabideen Sortzea Zerbitzaritik
+
+- File: [Assets/_Scripts/ResourceSpawner.cs](Assets/_Scripts/ResourceSpawner.cs)
+
+Zer gertatzen da:
+- Server-ak bakarrik sortzen ditu baliabideak.
+- Wood edo Stone motaren arabera dagokion prefab-a instantiatzen du.
+- Sortutako objektua NetworkObject gisa spawneatzen du.
+
+Zergatik da garrantzitsua:
+- Baliabideak ez dira bezeroek era libre sortzen.
+- Horrela ez da desinkronizaziorik eta anticheat-a murrizten da.
+
+### 3.8 Paleteak eta Eskuarki Objektua Jartzea
+
+- File: [Assets/_Scripts/ResourcePallet.cs](Assets/_Scripts/ResourcePallet.cs)
+
+Zer gertatzen da:
+- Palete bakoitzak m_acceptedObjectType dauka eta zenbat elementu pilatu daitezkeen kontrolatzen du.
+- Interact() metodoak bezeroak bidalitako objetu mota balidatzen du.
+- Paleteak elementu bat onartzen du eta m_stackedResources handitzen du.
+- Mugimenduaren ondoren audioa erreproduzitzen da.
+- Paletea beteta dagoenean, OnPalletFilled event-a jaurtitzen du.
+
+Zergatik da garrantzitsua:
+- Paleteak ez dira soilik “interactuable” objektuak; zerbitzariak kontrolatutako egoera eta irabazteko baldintza bat dira.
+
+### 3.9 Jokalariaren Izena UI-an
+
+- File: [Assets/_Scripts/PlayerNameUI.cs](Assets/_Scripts/PlayerNameUI.cs)
+
+Zer gertatzen da:
+- UIDocument-eko Label bat erabiltzen du jokalariaren izenarekin.
+- NetworkVariable<FixedString32Bytes> erabiltzen du izena sarean sinkronizatzeko.
+- Zerbitzariak izena ezartzen du formatu honetan: Player <OwnerClientId>.
+- Balio aldatu ahala, etiketa eguneratzen da.
+
+Zergatik da garrantzitsua:
+- Jokalariak nor den ikus dezaten aukera ematen du.
+- Erabiltzailearen esperientzia hobetzen du multiplayer test-ean.
+
+## 4. Fluxu Osoa: Item-a Hartzea
 
 ```mermaid
 sequenceDiagram
@@ -136,75 +191,97 @@ sequenceDiagram
     Owner->>Owner: Interact animazioa hasi
     Owner->>Owner: Animation event OnInteract
     Owner->>Server: RequestPickUpServerRpc(itemNetworkObjectId)
-    Server->>Server: Objektua eta canBePickedUp balidatu
+    Server->>Server: Objetua eta canBePickedUp balidatu
     Server->>Item: PickUp()
     Item->>Item: m_isAvailable = false (NetworkVariable)
-    Item-->>Owner: OnValueChanged sinkronizatua
-    Item-->>Server: OnValueChanged sinkronizatua
+    Item-->>Owner: Egoera sinkronizatua
 ```
 
-## 5. Proiektuko Multiplayer Kontzeptu Garrantzitsuak
+## 5. Fluxu Osoa: Elementua Paletean Utzita
 
-### 5.1 Owner-Only Logika
+```mermaid
+sequenceDiagram
+    participant Owner as Owner Client
+    participant Server as Server
+    participant Pallet as ResourcePallet
 
-Erabilita hemen:
-- input kudeaketa
-- mugimendua
-- interaction detector
-- camera follow
+    Owner->>Owner: Interact animazioa hasi
+    Owner->>Owner: Animation event OnInteract
+    Owner->>Server: RequestGiveItemServerRpc(palletNetworkObjectId)
+    Server->>Server: Objetu mota eta paletea balidatu
+    Server->>Pallet: Interact(heldObjectType)
+    Pallet->>Pallet: m_stackedResources handitu
+    Pallet-->>Owner: Egoera sinkronizatua
+```
 
-Helburua:
-- tokiko jokalariak bakarrik kontrola ditzala bere tokiko ezaugarriak.
+## 6. Fluxu Osoa: Baliabidea Harrastea
 
-### 5.2 Server-Only Egoera Aldaketak
+```mermaid
+sequenceDiagram
+    participant Owner as Owner Client
+    participant Server as Server
+    participant Node as ResourceNode
+    participant Spawner as ResourceSpawner
 
-Erabilita hemen:
-- pickable disponibilitatea
-- pickup ekintzaren azken exekuzioa
+    Owner->>Owner: Axi/Tool-a erabiltzen du
+    Owner->>Server: RequestResourceNodeInteractionServerRpc(nodeId)
+    Server->>Node: Harvest(toolType)
+    Node->>Node: m_health murriztu
+    alt Health > 0
+        Node-->>Owner: Animazio/audioa erreproduzitu
+    else Health == 0
+        Node->>Spawner: SpawnResource(producedObjectType, position)
+    end
+```
 
-Helburua:
-- anti-cheat eta koherentzia.
+## 7. Irabazteko Baldintza
 
-### 5.3 Event Harpidetzen Higienea
+- GameManager-ek palete guztien pilatutako baliabide kopurua kontatzen du.
+- Ezarritako irizpidea betetzen denean, uneko scene-a berriro kargatzen du.
+- Hori beheko metodoarekin egiten da:
+  - CheckWinCondition()
 
-Erabilita hemen:
-- OnNetworkSpawn / OnNetworkDespawn
-- OnEnable / OnDisable
+Zergatik da garrantzitsua:
+- Jokoaren egoera berriro hasieratzen da eta partida amaitutzat hartu daiteke.
+- Multijokalariaren fluxua eta UIa testatzeko erabilgarria da.
 
-Helburua:
-- callback bikoiztuak eta memory leak-ak saihestea.
-
-## 6. Datu Sinkronizazio Taula
+## 8. Datu Sinkronizazio Taula
 
 | Datuak | Mota | Jabea | Nork irakurtzen du | Non |
 |---|---|---|---|---|
 | Item disponibilitatea | NetworkVariable<bool> | Server | Everyone | PickableBase |
 | Held network object id | NetworkVariable<ulong> | Server flow | Everyone (net sync) | PlayerController |
 | Held object type | NetworkVariable<ObjectType> | Server flow | Everyone (net sync) | PlayerController |
+| Resource node health | NetworkVariable<int> | Server | Everyone | ResourceNode |
+| Pallet stacked resources | NetworkVariable<int> | Server | Everyone | ResourcePallet |
+| Player name | NetworkVariable<FixedString32Bytes> | Server | Everyone | PlayerNameUI |
 | Movement input | Local value | Owner | Owner only | MyPlayerInput |
 
-## 7. Ikasleen Egiaztapen Zerrenda
+## 9. Proiektuaren Uneko Scope-a
+
+Proiektu honek une honetan honakoak lantzen ditu:
+- multiplayer saio hasiera (Host/Client)
+- owner-based input eta mugimendua
+- pickup eta item transferentzia zerbitzariaren autoritatearekin
+- resource node harvesting eta resource spawn
+- paleteetan item-ak pilatzea eta irabazteko baldintza
+- jokalariaren izena UI-an sinkronizatzea
+
+## 10. Ikasleen Egiaztapen Zerrenda
 
 - Egiaztatu Host eta Client biak konektatzen direla UI botoiekin.
 - Egiaztatu tokiko jokalariak bakarrik erantzuten diola tokiko input-ari.
 - Egiaztatu E pickup-a radius eta angle barruan bakarrik funtzionatzen duela.
-- Egiaztatu pickup ekintza Server RPC bidez exekutatzen dela.
-- Egiaztatu jasotako item-a client guztientzat ez-eskuragarri bihurtzen dela.
-- Egiaztatu selection outline eguneratzen dela helburua aldatzean.
+- Egiaztatu pickup, give-item eta harvest ekintzak Server RPC bidez exekutatzen direla.
+- Egiaztatu item-ak eta baliabideak zerbitzariak sortzen dituela.
+- Egiaztatu paleteek pilaketa eta irabazteko baldintza egokiak egiten dituztela.
+- Egiaztatu jokalariaren izena denontzat agertzen dela.
 
-## 8. Debug Galdera Ohikoak
+## 11. Debug Galdera Ohikoak
 
 - Zergatik mugitzen da jokalari bakarra? -> IsOwner logika begiratu input eta movement-en.
 - Zergatik ez dabil pickup-a? -> Detector target-a, RPC deia eta server balidazioa begiratu.
 - Zergatik ez datoz bat client-en item egoerak? -> NetworkVariable baimenak eta callback-ak begiratu.
+- Zergatik ez dabil paleteetan uztea? -> Interact() balidazioa, held object type, eta server RPC begiratu.
+- Zergatik ez sortzen dira baliabideak? -> ResourceSpawner, ResourceNode eta NetworkObject spawn egoera begiratu.
 - Zergatik jaurtitzen dira callback-ak behin baino gehiagotan? -> subscribe/unsubscribe simetria begiratu.
-
-## 9. Uneko Scope Oharra
-
-Proiektu honek une honetan honakoak lantzen ditu:
-- multiplayer saio hasiera
-- owner-en araberako kontrola
-- pickup disponibilitate sinkronizatua
-- held-item egoera aldagai oinarrizkoak
-
-Geroagoko tutorial urratsetara joanez gero (adibidez resource harvesting), hedatu dokumentu hau RPC eta egoera sinkronizazio fluxu gehiagorekin.
