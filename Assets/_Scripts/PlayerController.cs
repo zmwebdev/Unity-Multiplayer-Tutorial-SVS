@@ -21,7 +21,8 @@ public class PlayerController : NetworkBehaviour
     private NetworkVariable<ulong> m_heldNetworkObjectId = new(ulong.MaxValue);
     private NetworkVariable<ObjectType> m_heldObjectType = new(ObjectType.None);
 
-    private void Awake() {
+    private void Awake()
+    {
         m_resourceSpawner = FindAnyObjectByType<ResourceSpawner>();
     }
 
@@ -41,7 +42,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (m_isInteracting || m_isChopping)
             return;
-        if(m_interactionDetector.ClosestInteractable == null)
+        if (m_interactionDetector.ClosestInteractable == null)
             return;
         m_animator.SetBool("Interact", true);
         m_isInteracting = true;
@@ -49,13 +50,13 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleActionPressed()
     {
-        if(IsOwner == false)
+        if (IsOwner == false)
         {
             return;
         }
         if (m_isChopping || m_isInteracting)
             return;
-        if(m_heldObjectType.Value is ObjectType.Axe or ObjectType.PickAxe)
+        if (m_heldObjectType.Value is ObjectType.Axe or ObjectType.PickAxe)
         {
             m_isChopping = true;
             m_animator.SetTrigger("Chop");
@@ -79,9 +80,9 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleChopAction()
     {
-          if(m_heldObjectType.Value is ObjectType.Axe or ObjectType.PickAxe)
+        if (m_heldObjectType.Value is ObjectType.Axe or ObjectType.PickAxe)
         {
-            if(m_interactionDetector.ClosestInteractable is ResourceNode)
+            if (m_interactionDetector.ClosestInteractable is ResourceNode)
             {
                 RequestResourceNodeInteractionServerRpc(
                     m_interactionDetector.ClosestInteractable.NetworkObject.NetworkObjectId);
@@ -152,12 +153,32 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (m_interactionDetector.ClosestInteractable is not PickableBase pickable)
+        if (m_interactionDetector.ClosestInteractable is PickableBase pickable)
         {
-            return;
+            RequestPickUpServerRpc(pickable.NetworkObject.NetworkObjectId);
         }
 
-        RequestPickUpServerRpc(pickable.NetworkObject.NetworkObjectId);
+        if (m_interactionDetector.ClosestInteractable is ResourcePallet pallet)
+        {
+            RequestGiveItemServerRpc(pallet.NetworkObject.NetworkObjectId);
+        }        
+    }
+
+    [Rpc(SendTo.Server)]
+    private void RequestGiveItemServerRpc(ulong networkObjectId)
+    {
+        if (!NetworkManager.SpawnManager.SpawnedObjects
+                .TryGetValue(networkObjectId, out NetworkObject target))
+            return;
+
+        if (!target.TryGetComponent(out ResourcePallet resourcePallet))
+            return;
+
+        if (resourcePallet.Interact(m_heldObjectType.Value))
+        {
+            m_heldObjectType.Value = ObjectType.None;
+            m_heldNetworkObjectId.Value = ulong.MaxValue;
+        }
     }
 
     [Rpc(SendTo.Server)]
@@ -227,10 +248,10 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
-        
+
         Vector2 movementInput = m_playerInput.MovementInput;
-        
-        if(m_isChopping || m_isInteracting)
+
+        if (m_isChopping || m_isInteracting)
         {
             movementInput = Vector2.zero;
         }

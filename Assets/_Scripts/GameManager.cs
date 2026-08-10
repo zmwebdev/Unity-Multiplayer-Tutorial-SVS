@@ -8,6 +8,7 @@ public class GameManager : NetworkBehaviour
 {
     [SerializeField] private MultiplayerUI m_multiplayerUI;
     [SerializeField] private GameObject m_playerPrefab;
+    [SerializeField] private List<ResourcePallet> m_pallets;
 
 
     private void Start()
@@ -29,7 +30,24 @@ public class GameManager : NetworkBehaviour
 
         NetworkManager.OnClientConnectedCallback += SpawnPlayer;
         NetworkManager.SceneManager.OnLoadEventCompleted += HandleSceneLoadCompleted;
+        foreach (ResourcePallet pallet in m_pallets)
+        {
+            pallet.OnPalletFilled += CheckWinCondition;
+        }
+    }
 
+    private void CheckWinCondition()
+    {
+        int points = 0;
+        foreach (ResourcePallet pallet in m_pallets)
+        {
+            points += pallet.StackedResoruces;
+        }
+        if (points >= m_pallets.Count * 3)
+        {
+            NetworkManager.SceneManager.LoadScene(
+                SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+        }
     }
 
     override public void OnNetworkDespawn()
@@ -38,6 +56,10 @@ public class GameManager : NetworkBehaviour
         {
             NetworkManager.OnClientConnectedCallback -= SpawnPlayer;
             NetworkManager.SceneManager.OnLoadEventCompleted -= HandleSceneLoadCompleted;
+            foreach (ResourcePallet pallet in m_pallets)
+            {
+                pallet.OnPalletFilled -= CheckWinCondition;
+            }
         }
 
         base.OnNetworkDespawn();
@@ -51,7 +73,7 @@ public class GameManager : NetworkBehaviour
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientID, true);
     }
 
-    private void HandleSceneLoadCompleted(string sceneName, 
+    private void HandleSceneLoadCompleted(string sceneName,
         LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         foreach (ulong clientId in clientsCompleted)
