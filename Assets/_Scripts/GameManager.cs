@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,8 +10,8 @@ public class GameManager : NetworkBehaviour
 {
     [SerializeField] private MultiplayerUI m_multiplayerUI;
     [SerializeField] private GameObject m_playerPrefab;
+    [SerializeField] private CinemachineCamera cinemachineCamera;
     [SerializeField] private List<ResourcePallet> m_pallets;
-
 
     private void Start()
     {
@@ -71,6 +73,7 @@ public class GameManager : NetworkBehaviour
             return;
         GameObject player = Instantiate(m_playerPrefab);
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientID, true);
+        cinemachineCamera.Follow = player.transform;
     }
 
     private void HandleSceneLoadCompleted(string sceneName,
