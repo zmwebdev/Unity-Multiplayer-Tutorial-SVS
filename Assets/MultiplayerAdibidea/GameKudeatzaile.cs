@@ -1,18 +1,32 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Threading.Tasks;
+using TMPro;
 
 public class GameKudeatzaile : NetworkBehaviour
 {
+    public SessionManager sessionManager;
+    [SerializeField] private TMP_InputField joinCode;
 
-    public void StartHost()
+    public async void StartHost()
     {
         // Start the host
-        NetworkManager.Singleton.StartHost();
+        //NetworkManager.Singleton.StartHost();
+
+        //
+        await sessionManager.StartSessionAsHost();
     }
 
-    public void StartClient()
+    public async void StartClient()
     {
         // Start the client
-        NetworkManager.Singleton.StartClient();
+        //NetworkManager.Singleton.StartClient();
+
+        // session manager erabibil join egin
+
+        Debug.Log($"Joining session with code: {joinCode.text}");
+        await sessionManager.StartSessionAsClient(joinCode.text.Trim());
     }
+
+     
 }

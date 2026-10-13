@@ -4,6 +4,7 @@ using System;
 using Unity.Services.Authentication;
 using Unity.Services.Multiplayer;
 using System.Threading.Tasks;
+using UnityEngine.Rendering;
 
 public class SessionManager : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class SessionManager : MonoBehaviour
 	     await AuthenticationService.Instance.SignInAnonymouslyAsync();
 	     Debug.Log($"Sign in anonymously succeeded! PlayerID: {AuthenticationService.Instance.PlayerId}");
 
-         await StartSessionAsHost();
+         //await StartSessionAsHost();
 	    }
 	    catch (Exception e)
 	    {
@@ -23,7 +24,7 @@ public class SessionManager : MonoBehaviour
 	    }
     }
 
-    async Task StartSessionAsHost()
+    public async Task StartSessionAsHost()
     {
         var options = new SessionOptions
         {
@@ -32,6 +33,15 @@ public class SessionManager : MonoBehaviour
         
         var session = await MultiplayerService.Instance.CreateSessionAsync(options);
         Debug.Log($"Session {session.Id} created! Join code: {session.Code}");
-    }    
+
+        // join session
+        //await StartSessionAsClient(session.Id);
+    }
+
+    public async Task StartSessionAsClient(string joinCode)
+    {
+        var session = await MultiplayerService.Instance.JoinSessionByCodeAsync(joinCode);
+        Debug.Log($"Joined session {session.Id} with code {joinCode}");
+    } 
 
 }
