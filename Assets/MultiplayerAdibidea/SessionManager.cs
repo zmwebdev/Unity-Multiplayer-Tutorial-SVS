@@ -5,9 +5,11 @@ using Unity.Services.Authentication;
 using Unity.Services.Multiplayer;
 using System.Threading.Tasks;
 using UnityEngine.Rendering;
+using TMPro;
 
 public class SessionManager : MonoBehaviour
 {
+    [SerializeField] private TMP_Text kodea;
     async void Start()
     {
 	    try
@@ -28,10 +30,11 @@ public class SessionManager : MonoBehaviour
     {
         var options = new SessionOptions
         {
-            MaxPlayers = 2
+            MaxPlayers = 10
         }.WithRelayNetwork(); // or WithDistributedAuthorityNetwork() to use Distributed Authority instead of Relay
         
         var session = await MultiplayerService.Instance.CreateSessionAsync(options);
+        kodea.text = session.Code;
         Debug.Log($"Session {session.Id} created! Join code: {session.Code}");
 
         // join session

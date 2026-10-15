@@ -5,7 +5,7 @@ using TMPro;
 
 public class GameKudeatzaile : NetworkBehaviour
 {
-    public SessionManager sessionManager;
+    [SerializeField] private SessionManager sessionManager;
     [SerializeField] private TMP_InputField joinCode;
 
     public async void StartHost()
