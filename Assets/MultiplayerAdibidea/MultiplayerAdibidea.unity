@@ -1465,9 +1465,9 @@ MonoBehaviour:
     - NPC mugimendua
 
     -
-    Sareko aldagaiak
+    WebGL (itchio): Websocket aktibatu!
 
-    - RPC deiak
+    - Sareko aldagaiak eta  RPC deiak: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@3.1/manual/basics/networkvariable.html#onvaluechanged-example
 
 '
   m_isRightToLeft: 0
