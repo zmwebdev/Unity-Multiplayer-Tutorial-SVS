@@ -1411,7 +1411,7 @@ GameObject:
   - component: {fileID: 1141565683}
   - component: {fileID: 1141565682}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: TODO
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1463,6 +1463,11 @@ MonoBehaviour:
     - Player izena jarri
 
     - NPC mugimendua
+
+    -
+    Sareko aldagaiak
+
+    - RPC deiak
 
 '
   m_isRightToLeft: 0
