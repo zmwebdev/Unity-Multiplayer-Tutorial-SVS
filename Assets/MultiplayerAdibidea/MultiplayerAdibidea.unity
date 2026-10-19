@@ -1567,6 +1567,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   sessionManager: {fileID: 1588787102}
   joinCode: {fileID: 390664013}
+  playerNameInput: {fileID: 2029449597}
 --- !u!4 &1102596720
 Transform:
   m_ObjectHideFlags: 0
