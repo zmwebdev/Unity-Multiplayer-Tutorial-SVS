@@ -46,5 +46,12 @@ public class NetworkPlayerMovement : NetworkBehaviour
         verticalVelocity.y += gravity * Time.deltaTime;
 
         controller.Move(verticalVelocity * Time.deltaTime);
+
+        // Check for the "Hitzegin" input action
+        if (playerInput.actions["Hitzegin"].WasPressedThisFrame())
+        {
+            Debug.Log($"Hitzegin sakatu da");
+        }
+        
     }
 }
