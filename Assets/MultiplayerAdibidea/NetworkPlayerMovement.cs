@@ -1,27 +1,24 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 
-[RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(PlayerInput))]
 public class NetworkPlayerMovement : NetworkBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float rotationSpeed = 180f;
 
-    private CharacterController controller;
     private PlayerInput playerInput;
-    private Vector3 verticalVelocity;
 
     private void Awake()
     {
-        controller = GetComponent<CharacterController>();
         playerInput = GetComponent<PlayerInput>();
     }
 
     public override void OnNetworkSpawn()
     {
-        // Only the owning client should read this player's input.
+        // Only the owning client reads input.
         playerInput.enabled = IsOwner;
     }
 
@@ -31,27 +28,21 @@ public class NetworkPlayerMovement : NetworkBehaviour
             return;
 
         Vector2 input =
-            playerInput.actions["Move"].ReadValue<Vector2>();
+            playerInput.actions["Mugitu"].ReadValue<Vector2>();
 
-        Vector3 move = new Vector3(input.x, 0f, input.y);
-        move = Vector3.ClampMagnitude(move, 1f);
+        // A/D or Left/Right: rotate.
+        transform.Rotate(
+            Vector3.up * input.x * rotationSpeed * Time.deltaTime
+        );
 
-        controller.Move(move * moveSpeed * Time.deltaTime);
+        // W/S or Up/Down: move forward/backward.
+        transform.position +=
+            transform.forward * input.y * moveSpeed * Time.deltaTime;
 
-        if (controller.isGrounded && verticalVelocity.y < 0f)
-        {
-            verticalVelocity.y = -2f;
-        }
-
-        verticalVelocity.y += gravity * Time.deltaTime;
-
-        controller.Move(verticalVelocity * Time.deltaTime);
-
-        // Check for the "Hitzegin" input action
+        // Check for the "Hitzegin" input action.
         if (playerInput.actions["Hitzegin"].WasPressedThisFrame())
         {
-            Debug.Log($"Hitzegin sakatu da");
+            Debug.Log("Hitzegin sakatu da");
         }
-        
     }
 }

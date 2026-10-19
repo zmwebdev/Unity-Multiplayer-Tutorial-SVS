@@ -210,13 +210,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3325905}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: -0.01938904, y: -0.9335797, z: 0.3324109, w: -0.13249902}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 38.741, y: -197.497, z: -3.814}
 --- !u!114 &3325908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -332,8 +332,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 84038289}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3426999, y: 0.0067652166, z: -0.0024660453, w: 0.93941736}
-  m_LocalPosition: {x: -3.705928, y: 10.899998, z: -14.89506}
+  m_LocalRotation: {x: -0.0013481723, y: 0.95965123, z: -0.28115216, w: -0.0046106577}
+  m_LocalPosition: {x: -3.0660653, y: 7.504818, z: 14.540105}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1458,14 +1458,12 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'TODO:
 
-    - Player mugimendua
-
     - Player izena jarri
 
     - NPC mugimendua
 
-    -
-    WebGL (itchio): Websocket aktibatu!
+    - WebGL (itchio):
+    Websocket aktibatu!
 
     - Sareko aldagaiak eta  RPC deiak: https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@3.1/manual/basics/networkvariable.html#onvaluechanged-example
 
