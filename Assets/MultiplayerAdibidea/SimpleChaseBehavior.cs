@@ -41,6 +41,10 @@ public class SimpleChaseBehavior : NetworkBehaviour
 
     private Transform FindNearestPlayer()
     {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer || !manager.IsListening)
+            return null;
+
         Transform best = null;
         float minSqr = float.MaxValue;
 
@@ -71,7 +75,7 @@ public class SimpleChaseBehavior : NetworkBehaviour
 
             // Jokalari konektatuen artean hurbilena aukeratu (irteten badira ere lehen berreskuratzen da)
             targetToChase = FindNearestPlayer();
-            if (targetToChase != null)
+            if (targetToChase != null && agent.isOnNavMesh)
                 agent.SetDestination(targetToChase.position);
         }
 
