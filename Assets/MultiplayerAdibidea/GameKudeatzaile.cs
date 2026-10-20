@@ -80,8 +80,31 @@ public class GameKudeatzaile : NetworkBehaviour
         networkManager.OnClientConnectedCallback -= OnClientConnected;
     }
 
+    private void OnEnable()
+    {
+        if (playerNameInput != null)
+            playerNameInput.onValueChanged.AddListener(OnPlayerNameInputChanged);
+    }
+
+    // Propagates the local edit to the server; other clients only receive it via the NetworkVariable label.
+    private void OnPlayerNameInputChanged(string newName)
+    {
+        pendingPlayerName = newName;
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsClient || manager.LocalClient == null)
+            return;
+
+        NetworkObject playerObject = manager.LocalClient.PlayerObject;
+        if (playerObject != null && playerObject.TryGetComponent(out PlayerIzena playerIzena))
+            playerIzena.SetMyName(newName);
+    }
+
     private void OnDisable()
     {
+        if (playerNameInput != null)
+            playerNameInput.onValueChanged.RemoveListener(OnPlayerNameInputChanged);
+
         if (networkManager != null)
             networkManager.OnClientConnectedCallback -= OnClientConnected;
     }
