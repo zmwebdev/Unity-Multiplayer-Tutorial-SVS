@@ -23,9 +23,6 @@ public class PatrolState : EnemyState
             enemy.Agent.speed = enemy.PatrolSpeed;
         }
 
-        // Set animation to Patrol (walking)
-        enemy.SetAnimationState(1); // 1 = Patrol
-
         // Go to first patrol point
         MoveToNextPatrolPoint();
     }

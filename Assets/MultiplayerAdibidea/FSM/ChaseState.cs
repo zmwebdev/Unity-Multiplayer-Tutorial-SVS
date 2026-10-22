@@ -24,8 +24,6 @@ public class ChaseState : EnemyState
             enemy.Agent.speed = enemy.ChaseSpeed;
         }
 
-        // Set animation to Chase (running)
-        enemy.SetAnimationState(2); // 2 = Chase
     }
 
     public override void Update()

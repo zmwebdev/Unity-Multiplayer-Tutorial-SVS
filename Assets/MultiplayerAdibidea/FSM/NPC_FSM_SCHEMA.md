@@ -16,7 +16,7 @@ EnemyAI
 ├── Detection
 │   ├── RangeDetector_FSM_Tutorial
 │   └── LineOfSightDetector_FSM_Tutorial
-└── NavMeshAgent, Animator, patrol points, movement/attack settings
+└── NavMeshAgent, patrol points, movement/attack settings
 ```
 
 `EnemyAI` creates the state objects in `Awake()`, initializes the FSM in `Start()` with `IdleState`, and forwards Unity's `Update()` and `FixedUpdate()` calls to the active state.
@@ -78,8 +78,6 @@ Each state inherits from `EnemyState`. Its `Enter()`, `Update()`, `FixedUpdate()
 | Idle duration | 3 seconds |
 | Time before losing a target | 5 seconds |
 | Attack cooldown | 1.5 seconds |
-
-Animation states are set to `0` for Idle, `1` for Patrol, and `2` for Chase. Setting the Attack animation state is currently commented out in `AttackState`.
 
 ## Unity setup
 

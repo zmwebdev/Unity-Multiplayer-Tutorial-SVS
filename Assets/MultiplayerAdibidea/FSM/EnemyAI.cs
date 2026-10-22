@@ -1,4 +1,3 @@
-using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -17,7 +16,6 @@ public class EnemyAI : NetworkBehaviour
     public NavMeshAgent Agent { get; private set; }
     [SerializeField] public RangeDetector_FSM_Tutorial RangeDetector;
     [SerializeField] public LineOfSightDetector_FSM_Tutorial LineOfSightDetector;
-    private Animator animator;
 
     [Header("Patrol Settings")]
     [SerializeField] private Transform[] patrolPoints;
@@ -81,7 +79,6 @@ public class EnemyAI : NetworkBehaviour
         Agent = GetComponent<NavMeshAgent>();
         //RangeDetector = GetComponent<RangeDetector>();
         //LineOfSightDetector = GetComponent<LineOfSightDetector>();
-        animator = GetComponentInChildren<Animator>(); // Animator can be in child object
 
         // Initialize state machine
         stateMachine = new EnemyStateMachine();
@@ -108,43 +105,6 @@ public class EnemyAI : NetworkBehaviour
     private void FixedUpdate()
     {
         stateMachine.FixedUpdate();
-    }
-
-    /// <summary>
-    /// Set animation state parameter
-    /// Animazio egoera parametroa ezarri
-    /// </summary>
-    /// <param name="stateIndex">0=Idle, 1=Patrol, 2=Chase, 3=Attack</param>
-    public void SetAnimationState(int stateIndex)
-    {
-        if (animator != null)
-        {
-            animator.SetInteger("CurrentState", stateIndex);
-        }
-    }
-
-    /// <summary>
-    /// Called by animation event when attack hits
-    /// Animazio event-ak deituta erasoak jo duenean
-    /// </summary>
-    public void OnAttackHit()
-    {
-        if (PlayerTarget != null)
-        {
-            float distanceToPlayer = Vector3.Distance(transform.position, PlayerTarget.transform.position);
-
-            if (distanceToPlayer <= AttackRange)
-            {
-                Debug.Log($"HIT! Dealing {AttackDamage} damage to player!");
-
-                // Apply damage to player (uncomment when PlayerHealth exists)
-                // PlayerHealth playerHealth = PlayerTarget.GetComponent<PlayerHealth>();
-                // if (playerHealth != null)
-                // {
-                //     playerHealth.TakeDamage(AttackDamage);
-                // }
-            }
-        }
     }
 
     private void OnDrawGizmos()

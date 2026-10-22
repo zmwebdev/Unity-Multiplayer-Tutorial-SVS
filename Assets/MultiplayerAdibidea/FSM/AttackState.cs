@@ -23,9 +23,6 @@ public class AttackState : EnemyState
             enemy.Agent.velocity = Vector3.zero;
         }
 
-        // Set animation to Attack
-        //enemy.SetAnimationState(3); // 3 = Attack
-
         lastAttackTime = -attackCooldown; // Allow immediate first attack
     }
 
@@ -79,9 +76,6 @@ public class AttackState : EnemyState
     private void PerformAttack()
     {
         Debug.Log("ATTACKING!");
-
-        // Here you would trigger attack animation
-        // enemy.Animator?.SetTrigger("Attack");
 
         if (enemy.PlayerTarget.TryGetComponent(out PlayerHealth playerHealth))
             playerHealth.TakeDamage(enemy.AttackDamage);

@@ -25,8 +25,6 @@ public class IdleState : EnemyState
             enemy.Agent.velocity = Vector3.zero;
         }
 
-        // Set animation to Idle
-        enemy.SetAnimationState(0); // 0 = Idle
     }
 
     public override void Update()
