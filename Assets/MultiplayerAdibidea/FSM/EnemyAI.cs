@@ -51,6 +51,30 @@ public class EnemyAI : NetworkBehaviour
     public float AttackRange => attackRange;
     public float AttackDamage => attackDamage;
 
+    public bool SwitchToCloserVisiblePlayer()
+    {
+        GameObject detectedPlayer = RangeDetector?.UpdateDetector();
+        if (detectedPlayer == null || detectedPlayer == PlayerTarget)
+        {
+            return false;
+        }
+
+        float detectedDistance = Vector3.Distance(transform.position, detectedPlayer.transform.position);
+        float currentTargetDistance = PlayerTarget != null
+            ? Vector3.Distance(transform.position, PlayerTarget.transform.position)
+            : float.PositiveInfinity;
+
+        if (detectedDistance >= currentTargetDistance
+            || LineOfSightDetector?.PerformDetection(detectedPlayer) == null)
+        {
+            return false;
+        }
+
+        PlayerTarget = detectedPlayer;
+        LastKnownPlayerPosition = detectedPlayer.transform.position;
+        return true;
+    }
+
     private void Awake()
     {
         // Get components

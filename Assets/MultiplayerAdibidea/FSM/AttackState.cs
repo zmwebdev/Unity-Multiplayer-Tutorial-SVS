@@ -31,6 +31,8 @@ public class AttackState : EnemyState
 
     public override void Update()
     {
+        enemy.SwitchToCloserVisiblePlayer();
+
         if (enemy.PlayerTarget == null)
         {
             stateMachine.ChangeState(enemy.IdleState);

@@ -15,17 +15,22 @@ public class RangeDetector_FSM_Tutorial : MonoBehaviour
 
     public GameObject UpdateDetector()
     {
-        // Perform sphere check
         Collider[] colliders = Physics.OverlapSphere(transform.position, detectionRadius, detectionMask);
 
-        if (colliders.Length > 0)
+        GameObject closestTarget = null;
+        float closestDistance = float.PositiveInfinity;
+
+        foreach (Collider collider in colliders)
         {
-            DetectedTarget = colliders[0].gameObject;
+            float distance = (collider.transform.position - transform.position).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestTarget = collider.gameObject;
+            }
         }
-        else
-        {
-            DetectedTarget = null;
-        }
+
+        DetectedTarget = closestTarget;
         return DetectedTarget;
     }
 

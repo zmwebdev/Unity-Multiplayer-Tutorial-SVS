@@ -30,6 +30,11 @@ public class ChaseState : EnemyState
 
     public override void Update()
     {
+        if (enemy.SwitchToCloserVisiblePlayer())
+        {
+            timeSinceLastSeen = 0f;
+        }
+
         if (enemy.PlayerTarget == null)
         {
             stateMachine.ChangeState(enemy.IdleState);
