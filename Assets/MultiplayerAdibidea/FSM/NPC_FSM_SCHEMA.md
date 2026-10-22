@@ -42,6 +42,7 @@ Chase
   └── Player target is null ───────────────────────> Idle
 
 Attack
+  ├── Closer player detected and visible ─────────> Switch target immediately
   ├── Player out of range or not visible ──────────> Chase
   ├── Player target is null ───────────────────────> Idle
   └── Every 1.5 seconds ───────────────────────────> Deal damage
@@ -61,9 +62,9 @@ Each state inherits from `EnemyState`. Its `Enter()`, `Update()`, `FixedUpdate()
 
 - `RangeDetector_FSM_Tutorial` checks for colliders inside its configured sphere radius and detection layer mask. It returns the nearest collider's GameObject.
 - `LineOfSightDetector_FSM_Tutorial` uses a raycast and its configured player layer mask to check whether the candidate target is visible.
+- While chasing or attacking, `EnemyAI` checks the nearest detected candidate every frame. It switches targets only when the candidate is closer than the current target and visible.
 - `IdleState` stops the NavMeshAgent, waits up to 3 seconds, and checks for a detected, visible player.
-- `PatrolState` moves through the configured patrol points at the patrol speed. It returns to Idle if there are no patrol points.
-- `ChaseState` and `AttackState` recheck the nearest detected player every frame. If that player is closer than the current target and visible, the NPC switches to that player immediately.
+- `PatrolState` moves through the configured patrol points at the patrol speed, advancing when it is within 1.5 units of a waypoint. It returns to Idle if there are no patrol points.
 - `ChaseState` moves toward the visible player and updates the last known position. When the player is not visible, it moves toward that last known position; after reaching it, the state returns to Idle once the player has been unseen for 5 seconds.
 - `AttackState` stops the agent, faces the player, and attempts an attack every 1.5 seconds while the player remains visible and within attack range. It calls `PlayerHealth.TakeDamage()` if the target has a `PlayerHealth` component.
 
@@ -73,6 +74,10 @@ Each state inherits from `EnemyState`. Its `Enter()`, `Update()`, `FixedUpdate()
 | --- | ---: |
 | Patrol speed | 2 |
 | Chase speed | 4 |
+| Player detection radius | 10 |
+| Line-of-sight range | 10 |
+| Line-of-sight origin height | 3 |
+| Waypoint reached distance | 1.5 |
 | Attack range | 2.5 |
 | Attack damage | 10 |
 | Idle duration | 3 seconds |
