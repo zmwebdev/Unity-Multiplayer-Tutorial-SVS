@@ -21,6 +21,12 @@ EnemyAI
 
 `EnemyAI` creates the state objects in `Awake()`, initializes the FSM in `Start()` with `IdleState`, and forwards Unity's `Update()` and `FixedUpdate()` calls to the active state.
 
+## Why `EnemyAI` uses `NetworkBehaviour`
+
+`EnemyAI` inherits from `NetworkBehaviour` because it is intended to be attached to an NPC that participates in a Unity Netcode for GameObjects session. A `NetworkBehaviour` is the NGO component base for scripts on a `NetworkObject`; it provides access to networking context and APIs such as server/owner checks, network variables, and RPCs when needed.
+
+In the current implementation, `EnemyAI` does not use those networking APIs: it has no server/owner checks, RPCs, or network variables. Its `Update()` and `FixedUpdate()` run the FSM locally wherever the component is active. Inheriting from `NetworkBehaviour` alone does not make the AI server-authoritative or synchronize its state, movement, target, or damage. Those behaviors require explicit authority checks and appropriate network synchronization.
+
 ## State transitions
 
 ```text
