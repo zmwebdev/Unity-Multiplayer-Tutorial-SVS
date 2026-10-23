@@ -14,6 +14,7 @@ Guide to the networking concepts used in `MultiplayerAdibidea.unity` and where e
 | [PlayerHealth](PlayerHealth.cs) | Player health + label | `NetworkVariable`, server authority |
 | [SimpleChaseBehavior](SimpleChaseBehavior.cs) | Enemy chases nearest player | Server-only AI, `ConnectedClientsList` |
 | [SimpleAttackBehavior](SimpleAttackBehavior.cs) | Enemy attacks nearest player | Server-only logic, calls `TakeDamage` |
+| `ScoreManager` (updates the Score Canvas text) | Shared team score, see [section 8.1](#81-shared-score-scoremanager--score-canvas) | In-scene `NetworkObject`, `NetworkVariable`, RPCs |
 
 `SimplePlayerMovement` and `SimplePatrolBehavior` are the single-player versions and are not networked.
 
@@ -133,6 +134,89 @@ The client cannot write `playerName` directly (write permission is `Server`), so
 - Always null-check `NetworkManager.Singleton` and `PlayerObject`; players can disconnect at any time.
 - Damage: `PlayerHealth.TakeDamage(amount)` on the server → `currentHealth` changes → all clients update their HP label.
 
+### 8.1 Shared score (ScoreManager + Score Canvas)
+
+Exercise that combines everything above: one score shared by all players.
+
+**Scene setup**
+- `ScoreManager` GameObject: `NetworkObject` + `ScoreManager` script. It is an **in-scene NetworkObject**, so it spawns with the scene when the host starts (no prefab registration needed).
+- `Score Canvas`: a normal (non-networked) UI with a `TextMeshProUGUI`. Drag that text into the `scoreText` field of `ScoreManager` in the Inspector. Every client has its own copy of the canvas and only *displays* the score. No separate UI script is needed.
+
+**ScoreManager** – state in a `NetworkVariable`, actions through RPCs:
+
+```csharp
+using TMPro;
+using Unity.Netcode;
+using UnityEngine;
+
+public class ScoreManager : NetworkBehaviour
+{
+    [SerializeField] private TextMeshProUGUI scoreText;
+
+    public static ScoreManager Instance { get; private set; }
+
+    public NetworkVariable<int> TotalScore = new(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private void Awake() => Instance = this;
+
+    public override void OnNetworkSpawn()
+    {
+        TotalScore.OnValueChanged += OnScoreChanged;
+        UpdateText(TotalScore.Value); // initial value, also for late joiners
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        TotalScore.OnValueChanged -= OnScoreChanged;
+    }
+
+    private void OnScoreChanged(int oldValue, int newValue) => UpdateText(newValue);
+
+    private void UpdateText(int value)
+    {
+        if (scoreText != null)
+            scoreText.text = $"Score: {value}";
+    }
+
+    // Server-side API (enemy dies, etc.)
+    public void AddScore(int amount)
+    {
+        if (!IsServer) return;
+        TotalScore.Value += amount;
+    }
+
+    // Client asks the server to add score (e.g. pickup collected)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void AddScoreServerRpc(int amount) => TotalScore.Value += amount; // validate amount in real games
+
+    // Server tells every client about a one-off event (sound, effect)
+    [Rpc(SendTo.ClientsAndHost)]
+    private void ScoreFeedbackClientRpc(int amount) => Debug.Log($"+{amount} points!");
+
+    public void AddScoreWithFeedback(int amount)
+    {
+        if (!IsServer) return;
+        TotalScore.Value += amount;
+        ScoreFeedbackClientRpc(amount);
+    }
+}
+```
+
+With older NGO versions use `[ServerRpc(RequireOwnership = false)]` and `[ClientRpc]` (method names must end with `ServerRpc` / `ClientRpc`).
+
+**How the UI updates**: the server changes `TotalScore`, Netcode replicates it, and `OnValueChanged` fires on every machine (host included) and updates the text. `OnNetworkSpawn` runs when the object is ready, so no waiting loop is needed. Subscribe there and unsubscribe in `OnNetworkDespawn`. Networking and UI share one class to keep the tutorial simple; in larger projects, split them into a networked manager and a separate UI script.
+
+**Usage**
+- Server (enemy killed): `ScoreManager.Instance.AddScoreWithFeedback(10);`
+- Client (pickup): `ScoreManager.Instance.AddScoreServerRpc(5);`
+
+**What to learn from it**
+- `NetworkVariable` = persistent state; late joiners get the current score automatically.
+- `[ServerRpc]` = client request; the client cannot write the variable (write permission is `Server`).
+- `[ClientRpc]` = one-off event for everyone, not stored.
+- UI is local: the text reacts to `OnValueChanged` and the canvas is never networked.
+
 ## 9. Prefab checklist
 
 **Player prefab**
@@ -150,6 +234,7 @@ The client cannot write `playerName` directly (write permission is `Server`), so
 **Scene**
 - `NetworkManager` with transport (Unity Transport / Relay)
 - Baked NavMesh for the enemies
+- `ScoreManager` GameObject with `NetworkObject` (in-scene) and the Score Canvas (its `TextMeshProUGUI` assigned to `ScoreManager.scoreText`)
 
 ## 10. Common mistakes
 
@@ -165,7 +250,7 @@ The client cannot write `playerName` directly (write permission is `Server`), so
 
 - Unity Editor as host + a build (`Build/`) as client, or use **Multiplayer Play Mode** (Window → Multiplayer Play Mode).
 - Host creates the session; copy the join code into the client input and press join.
-- Check: names appear above all players, health decreases when the enemy attacks, enemies move identically on all clients.
+- Check: names appear above all players, health decreases when the enemy attacks, enemies move identically on all clients, the score shows the same value on host and clients (a late-joining client sees the current score).
 
 ## 12. References
 

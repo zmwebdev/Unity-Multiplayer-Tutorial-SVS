@@ -44,7 +44,12 @@ public class PlayerHealth : NetworkBehaviour
         if (!IsServer || IsDead || amount <= 0f)
             return;
 
-        currentHealth.Value = Mathf.Max(0f, currentHealth.Value - amount);
+        float before = currentHealth.Value;
+        currentHealth.Value = Mathf.Max(0f, before - amount);
+
+        float realDamage = before - currentHealth.Value; // doesn't count damage beyond 0 HP
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.AddScore(-Mathf.RoundToInt(realDamage));
     }
 
     public void Heal(float amount)
