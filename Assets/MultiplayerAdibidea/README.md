@@ -1,260 +1,167 @@
-# Netcode for GameObjects (NGO) – MultiplayerAdibidea scene
+# MultiplayerAdibidea: a first look at Netcode for GameObjects
 
-Guide to the networking concepts used in `MultiplayerAdibidea.unity` and where each one appears in the scripts.
+This guide introduces the multiplayer setup in this Unity scene. It is written for students who already know their way around Unity scenes, GameObjects, components, prefabs, and C# scripts, but are new to networking.
 
-## 1. Scene overview
+The project uses **Netcode for GameObjects (NGO) 2.13.3** for gameplay networking and **Unity Multiplayer Services** to create and join sessions through Relay. The scene and scripts referenced below are in this folder.
 
-| Script | Purpose | NGO concepts |
-|---|---|---|
-| [SessionManager](SessionManager.cs) | Unity Services sign-in, create/join session through Relay | Multiplayer Services (`WithRelayNetwork`), join code |
-| [GameKudeatzaile](GameKudeatzaile.cs) | UI: host/client buttons, player name input | `NetworkManager`, `OnClientConnectedCallback`, `PlayerObject` |
-| [NetworkPlayerMovement](NetworkPlayerMovement.cs) | Local input and movement | Ownership (`IsOwner`) |
-| [PlayerIzena](PlayerIzena.cs) | Player name label | `NetworkVariable`, `[ServerRpc]` |
-| [PlayerKolorea](PlayerKolorea.cs) | Colour per player | `OwnerClientId`, `OnNetworkSpawn` |
-| [PlayerHealth](PlayerHealth.cs) | Player health + label | `NetworkVariable`, server authority |
-| [SimpleChaseBehavior](SimpleChaseBehavior.cs) | Enemy chases nearest player | Server-only AI, `ConnectedClientsList` |
-| [SimpleAttackBehavior](SimpleAttackBehavior.cs) | Enemy attacks nearest player | Server-only logic, calls `TakeDamage` |
-| `ScoreManager` (updates the Score Canvas text) | Shared team score, see [section 8.1](#81-shared-score-scoremanager--score-canvas) | In-scene `NetworkObject`, `NetworkVariable`, RPCs |
+## What you will learn
 
-`SimplePlayerMovement` and `SimplePatrolBehavior` are the single-player versions and are not networked.
+By exploring this example, you will learn how to:
 
-## 2. Basic concepts
+- start a host or join one as a client;
+- let NGO create a player object for each connected player;
+- decide which machine controls an object;
+- synchronize state that every player needs to see;
+- send a request or one-time event between clients and the server;
+- keep server-owned gameplay, such as enemy attacks and health, consistent.
 
-- **Host**: server and client in the same process. **Client**: connects to the host (here through Relay with a join code).
-- **Server authority**: the server decides game state (health, enemy AI). Clients only send requests and display results.
-- **NetworkManager**: singleton (`NetworkManager.Singleton`) that starts/stops the network and tracks clients.
-- **NetworkObject**: required on every prefab that is synchronised. Must be registered in `DefaultNetworkPrefabs.asset`.
-- **NetworkBehaviour**: `MonoBehaviour` replacement for scripts that need network features (`IsServer`, `IsOwner`, RPCs, `NetworkVariable`).
+## Run the scene
 
-## 3. Roles and ownership
+1. Open the Unity project and open `MultiplayerAdibidea.unity`.
+2. To connect over the internet, sign in to Unity and make sure the project is linked to a Unity Cloud project with Authentication and Multiplayer/Relay configured. This scene signs players in anonymously; it still needs an internet connection.
+3. Start one instance and select **Host**. The host creates a Relay session and displays a join code.
+4. Start a second instance, enter the host's join code, and select **Client**. You can use a standalone build for the second instance or Unity's Multiplayer Play Mode if it is installed and configured.
+5. Check the Unity Console for connection or setup errors.
 
-Useful properties inside a `NetworkBehaviour`:
+The `SessionManager` handles Unity Services sign-in and creating/joining Relay sessions. The `GameKudeatzaile` scene object connects the UI buttons to those operations. Relay helps players connect; it does not decide game rules or synchronize gameplay state. NGO handles those parts.
 
-| Property | Meaning |
-|---|---|
-| `IsServer` | This instance runs on the server/host |
-| `IsClient` | This instance runs on a client (host is both) |
-| `IsHost` | Server and client at once |
-| `IsOwner` | The local client owns this object |
-| `OwnerClientId` | Id of the owning client |
+## The essential idea: more than one copy of the game
 
-Examples in this scene:
-- `NetworkPlayerMovement`: `if (!IsOwner) return;` so each client moves only its own player.
-- `PlayerKolorea`: `OwnerClientId % materials.Length` chooses a material, giving each player a different colour.
-- Enemies: `if (!IsServer) enabled = false;` so AI runs only on the server.
+In a network session, each player runs a copy of the game. Each copy has its own scene, GameObjects, scripts, and UI. NGO sends selected information between those copies so that they can present one shared game.
 
-## 4. Lifecycle
+### Host, server, and client
 
-```csharp
-public override void OnNetworkSpawn()   // object is ready on the network: subscribe, initialise
-public override void OnNetworkDespawn() // unsubscribe
-```
+- A **server** controls shared game state and decides whether gameplay requests are valid.
+- A **client** is a player connected to that server.
+- A **host** is both the server and a local client in one application.
 
-Use `OnNetworkSpawn` instead of `Awake`/`Start` for anything that depends on `IsServer`/`IsOwner`, since those values are not valid earlier.
+In NGO, the host has both server and client roles. Do not assume that a GameObject or a variable is automatically shared just because it exists in a scene.
 
-## 5. NetworkVariable
+### `NetworkManager`: the session's networking hub
 
-Synchronised state, automatically sent from the writer to everyone, including late joiners.
+Each session needs one active `NetworkManager`. It starts and stops NGO, tracks connected clients, and holds settings such as the player prefab and transport. This scene's NetworkManager uses Unity Transport; the session setup configures Relay for internet connections.
 
-```csharp
-private readonly NetworkVariable<FixedString64Bytes> playerName = new(
-    default,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
-```
+### `NetworkObject`: the identity NGO synchronizes
 
-- **Read permission**: `Everyone` or `Owner`.
-- **Write permission**: `Server` (safest) or `Owner`.
-- **OnValueChanged**: `(previous, current)` callback fired on every machine that receives the change.
-- Allowed types: unmanaged/value types (`int`, `float`, `bool`, enums, structs, `FixedString`). Do not use `string`; use `FixedString32/64/128Bytes`.
-- Use for **persistent state**: names, health, scores.
+Add a `NetworkObject` to a prefab or scene object that must exist as a networked object. It gives that object a network identity so NGO can spawn, track, and despawn its corresponding instances on connected machines.
 
-In this scene:
-- `PlayerIzena.playerName` – player name, shown in the label.
-- `PlayerHealth.currentHealth` – server-written, read by all; `OnValueChanged` updates the HP label.
+Network prefabs must be registered with the NetworkManager. In this scene, `Player.prefab` is assigned as the player prefab and is also included in `NetworkPrefabsListAdibidekoak.asset`. When a client joins, NGO creates a player object for that client.
 
-## 6. RPCs
+### `NetworkBehaviour`: a script with networking features
 
-An RPC is a method call sent over the network. Use for **events/actions**, not persistent state.
+Use `NetworkBehaviour` instead of `MonoBehaviour` when a script needs NGO features such as `IsServer`, `IsOwner`, `NetworkVariable`, or RPCs. The script must be on the same GameObject as a `NetworkObject` (or on one of its children, as supported by NGO).
 
-| Type | Called from | Runs on |
-|---|---|---|
-| `[ServerRpc]` | Client (owner by default) | Server |
-| `[ClientRpc]` | Server | All clients |
+Ordinary Unity scripts and UI do not need to inherit from `NetworkBehaviour` unless they use those networking features.
 
-Rules:
-- Method name must end with `ServerRpc` / `ClientRpc`.
-- Parameters must be serialisable (primitives, `FixedString`, structs, arrays of those).
-- `[ServerRpc(RequireOwnership = false)]` allows non-owners to call it. Validate inputs on the server.
+## Who controls an object?
 
-In this scene:
+Two checks you will use often are:
+
+| Check | Meaning |
+| --- | --- |
+| `IsServer` | This copy is running the server role. True on the host. |
+| `IsClient` | This copy is running a client role. True on the host as well. |
+| `IsHost` | This copy is both server and client. |
+| `IsOwner` | This copy belongs to the locally controlled client. |
+| `OwnerClientId` | The network ID of the client that owns the object. |
+
+Ownership answers **which client owns this object?** It does not automatically make that client trustworthy or give it permission to change every piece of shared state. Server authority means the server decides important game state.
+
+In `NetworkPlayerMovement`, the input component is enabled only for the owning player, and movement is applied only when `IsOwner` is true. The player prefab's `NetworkTransform` is configured for owner authority so that the owner's movement is synchronized. The enemy scripts instead run their AI on the server.
+
+### Wait for the network spawn lifecycle
+
+`Awake` and `Start` are normal Unity lifecycle methods. They can run before an object has been spawned into the network, so avoid using them to make decisions that depend on `IsServer`, `IsOwner`, or the object's network state.
+
+NGO provides network lifecycle methods for that:
 
 ```csharp
-// PlayerIzena
-public void SetMyName(string name)
+public override void OnNetworkSpawn()
 {
-    if (IsOwner) SubmitNameServerRpc(name);
+    // The object has been spawned by NGO. Check ownership or subscribe to network state here.
 }
 
-[ServerRpc]
-private void SubmitNameServerRpc(string name)
+public override void OnNetworkDespawn()
 {
-    playerName.Value = new FixedString64Bytes(name); // server writes, NetworkVariable replicates
+    // Unsubscribe from network state or clean up network-specific work here.
 }
 ```
 
-The client cannot write `playerName` directly (write permission is `Server`), so it asks the server through an RPC.
+Unsubscribe from events in `OnNetworkDespawn` when you subscribed in `OnNetworkSpawn`. This prevents stale subscriptions when an object is despawned and spawned again.
 
-### Why `PlayerHealth.TakeDamage` is not an RPC
+## Synchronize state with `NetworkVariable`
 
-`TakeDamage` is only called from `SimpleAttackBehavior`, which runs only on the server. It is a plain server-side method (`if (!IsServer) return;`) that writes a `NetworkVariable`; replication to clients is automatic. Making it a `[ServerRpc]` would be unnecessary and would let clients call damage. Use a `[ServerRpc]` only if a **client** must trigger the action (e.g. player attacks an enemy), and a `[ClientRpc]` for one-off effects (sound, animation, particles).
+A `NetworkVariable` stores a value that should stay synchronized, such as a player's health or a shared score. NGO sends its current value to connected players, including clients that join later. This makes it suitable for **state**, rather than a one-time notification.
 
-### NetworkVariable or RPC?
+For example, `PlayerHealth` stores health in a server-write, everyone-read `NetworkVariable<float>`. The server changes the value when damage is taken, and each client updates its local health label when the value changes.
 
-| Need | Use |
-|---|---|
-| State that late joiners must see (health, name, score) | `NetworkVariable` |
-| One-off event (play sound, show effect) | `[ClientRpc]` |
-| Client asks server to do something | `[ServerRpc]` |
+Important points:
 
-## 7. Connection flow in this scene
+- Choose read and write permissions deliberately. A common pattern is **everyone can read; only the server can write**.
+- Subscribe to `OnValueChanged` to update local UI or presentation, and unsubscribe when the network object despawns.
+- Initialize UI from the current value as well as listening for changes. A client may spawn after the value was first set.
+- NGO network variables support specific serializable types. For text, use a supported fixed string type such as `FixedString64Bytes`, not a regular C# `string`.
 
-1. `SessionManager.Start` initialises Unity Services and signs in anonymously.
-2. **Host**: `GameKudeatzaile.StartHost` → `SessionManager.StartSessionAsHost` creates a Relay session and shows the join code.
-3. **Client**: `GameKudeatzaile.StartClient` → `StartSessionAsClient(joinCode)` joins the session.
-4. NGO spawns the Player prefab for every connected client.
-5. `GameKudeatzaile` waits for `OnClientConnectedCallback`, gets `LocalClient.PlayerObject` and calls `PlayerIzena.SetMyName`.
-6. While connected, editing the name input sends the new name again, and every client's label updates through the `NetworkVariable`.
+Examples in this project:
 
-## 8. Enemy AI (server-authoritative)
+- `PlayerHealth` synchronizes player health.
+- `ScoreManager` synchronizes the shared score and updates the local score text on each machine.
+- `PlayerIzena` contains an example of synchronizing a player name.
 
-- `SimpleChaseBehavior` and `SimpleAttackBehavior` are `NetworkBehaviour`s that disable themselves on clients.
-- Target is picked at runtime: `NetworkManager.Singleton.ConnectedClientsList` → each `client.PlayerObject` → nearest by distance.
-- Clients see the enemy move through **NetworkTransform** (position/rotation sync). The `NavMeshAgent` is disabled on clients.
-- Always null-check `NetworkManager.Singleton` and `PlayerObject`; players can disconnect at any time.
-- Damage: `PlayerHealth.TakeDamage(amount)` on the server → `currentHealth` changes → all clients update their HP label.
+**Project setup note:** `PlayerIzena.cs` is present, but `Player.prefab` does not currently have that component or a name label assigned. To use the name feature, add and configure the component on the player prefab, then assign its label in the Inspector.
 
-### 8.1 Shared score (ScoreManager + Score Canvas)
+## Send requests and events with RPCs
 
-Exercise that combines everything above: one score shared by all players.
+An **RPC** (remote procedure call) asks NGO to run a method on another machine. Use one when something happens, or when a client needs to ask the server to perform an action. Do not use an RPC as a replacement for persistent state that late joiners must see.
 
-**Scene setup**
-- `ScoreManager` GameObject: `NetworkObject` + `ScoreManager` script. It is an **in-scene NetworkObject**, so it spawns with the scene when the host starts (no prefab registration needed).
-- `Score Canvas`: a normal (non-networked) UI with a `TextMeshProUGUI`. Drag that text into the `scoreText` field of `ScoreManager` in the Inspector. Every client has its own copy of the canvas and only *displays* the score. No separate UI script is needed.
+NGO 2.x supports the unified `[Rpc]` API. For example, a client can request that the server perform an action using an RPC targeted at the server. The server should validate the request before changing important game state. The exact permissions and target should match the action and object ownership.
 
-**ScoreManager** – state in a `NetworkVariable`, actions through RPCs:
+This project also has a legacy `[ServerRpc]` example in `PlayerIzena`: the owning client submits a name to the server, and the server writes it to a `NetworkVariable`. The synchronized variable then delivers the name to everyone. You may encounter both RPC styles in NGO projects; use the API documented for the version installed in your project.
 
-```csharp
-using TMPro;
-using Unity.Netcode;
-using UnityEngine;
+| Need | Suitable tool |
+| --- | --- |
+| Shared value that must remain current, including for late joiners | `NetworkVariable` |
+| Client asks the server to do something | Server-targeted RPC, with server-side validation |
+| One-time effect or notification for connected clients | Client-targeted RPC |
 
-public class ScoreManager : NetworkBehaviour
-{
-    [SerializeField] private TextMeshProUGUI scoreText;
+For example, `PlayerHealth.TakeDamage` is a normal method rather than an RPC because the enemy attack logic already runs on the server. The server changes health directly; the `NetworkVariable` distributes the result.
 
-    public static ScoreManager Instance { get; private set; }
+## Follow the flow through this example
 
-    public NetworkVariable<int> TotalScore = new(
-        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+1. `SessionManager` initializes Unity Services and signs in anonymously.
+2. The host button calls `SessionManager.StartSessionAsHost`, which creates a Relay session and displays its join code.
+3. A client enters that code and joins through `SessionManager.StartSessionAsClient`.
+4. NGO connects the players and spawns a `Player.prefab` for each client.
+5. Each copy has the same networked player object, but only its owner reads that player's input.
+6. The owner-authoritative `NetworkTransform` synchronizes the player's movement to the other connected copies.
+7. Server-side enemy logic can select connected players, attack them, and change their health. NGO replicates health and score state to the clients.
 
-    private void Awake() => Instance = this;
+Useful files to read in order:
 
-    public override void OnNetworkSpawn()
-    {
-        TotalScore.OnValueChanged += OnScoreChanged;
-        UpdateText(TotalScore.Value); // initial value, also for late joiners
-    }
+1. `SessionManager.cs` — Unity Services, Relay, and session creation/joining.
+2. `GameKudeatzaile.cs` — UI calls that start the host or client.
+3. `Player.prefab` and `NetworkPlayerMovement.cs` — player network object, ownership, input, and transform synchronization.
+4. `PlayerHealth.cs` and `ScoreManager.cs` — server-written state and client-side display.
+5. `SimpleChaseBehavior.cs` and `SimpleAttackBehavior.cs` — server-only enemy behavior.
 
-    public override void OnNetworkDespawn()
-    {
-        TotalScore.OnValueChanged -= OnScoreChanged;
-    }
+## Testing and troubleshooting
 
-    private void OnScoreChanged(int oldValue, int newValue) => UpdateText(newValue);
+Try connecting two instances and observe the same player objects, movement, enemy behavior, health, and score in both. Use the Unity Console to investigate errors on either instance.
 
-    private void UpdateText(int value)
-    {
-        if (scoreText != null)
-            scoreText.text = $"Score: {value}";
-    }
+Common problems:
 
-    // Server-side API (enemy dies, etc.)
-    public void AddScore(int amount)
-    {
-        if (!IsServer) return;
-        TotalScore.Value += amount;
-    }
+- **The player does not appear:** Check that the NetworkManager is active, `Player.prefab` is assigned as its Player Prefab, and the prefab has a `NetworkObject`.
+- **Another client cannot connect:** Check internet access, Unity Services project configuration, Authentication/Relay setup, and the join code.
+- **The player moves locally but not remotely:** Check the `NetworkTransform` authority settings and that it is on the networked player object.
+- **A client tries to write server-owned state:** Send a request to the server instead. Only the permitted writer can change a `NetworkVariable`.
+- **A network check behaves unexpectedly in `Awake` or `Start`:** Move logic that depends on ownership or server/client role to `OnNetworkSpawn`.
+- **The local player reference is null:** The player may not have spawned yet, or may have disconnected. Check after the connection/spawn callback and handle a missing object.
+- **A networked prefab cannot spawn:** Make sure it has a `NetworkObject` and is registered with the NetworkManager.
 
-    // Client asks the server to add score (e.g. pickup collected)
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void AddScoreServerRpc(int amount) => TotalScore.Value += amount; // validate amount in real games
+## References
 
-    // Server tells every client about a one-off event (sound, effect)
-    [Rpc(SendTo.ClientsAndHost)]
-    private void ScoreFeedbackClientRpc(int amount) => Debug.Log($"+{amount} points!");
-
-    public void AddScoreWithFeedback(int amount)
-    {
-        if (!IsServer) return;
-        TotalScore.Value += amount;
-        ScoreFeedbackClientRpc(amount);
-    }
-}
-```
-
-With older NGO versions use `[ServerRpc(RequireOwnership = false)]` and `[ClientRpc]` (method names must end with `ServerRpc` / `ClientRpc`).
-
-**How the UI updates**: the server changes `TotalScore`, Netcode replicates it, and `OnValueChanged` fires on every machine (host included) and updates the text. `OnNetworkSpawn` runs when the object is ready, so no waiting loop is needed. Subscribe there and unsubscribe in `OnNetworkDespawn`. Networking and UI share one class to keep the tutorial simple; in larger projects, split them into a networked manager and a separate UI script.
-
-**Usage**
-- Server (enemy killed): `ScoreManager.Instance.AddScoreWithFeedback(10);`
-- Client (pickup): `ScoreManager.Instance.AddScoreServerRpc(5);`
-
-**What to learn from it**
-- `NetworkVariable` = persistent state; late joiners get the current score automatically.
-- `[ServerRpc]` = client request; the client cannot write the variable (write permission is `Server`).
-- `[ClientRpc]` = one-off event for everyone, not stored.
-- UI is local: the text reacts to `OnValueChanged` and the canvas is never networked.
-
-## 9. Prefab checklist
-
-**Player prefab**
-- `NetworkObject`
-- `NetworkTransform` (use *Client Authority* / owner-authoritative if the owner moves it, e.g. `ClientNetworkTransform`)
-- `NetworkPlayerMovement`, `PlayerInput`
-- `PlayerIzena` (+ name label), `PlayerKolorea` (+ materials), `PlayerHealth` (+ health label)
-- Registered as the **Player Prefab** in `NetworkManager`
-
-**Enemy prefab**
-- `NetworkObject`, `NetworkTransform` (server-authoritative), `NavMeshAgent`
-- `SimpleChaseBehavior`, `SimpleAttackBehavior`
-- Added to `DefaultNetworkPrefabs.asset` and spawned by the server (`Instantiate` + `NetworkObject.Spawn()`), or placed in the scene as an in-scene NetworkObject
-
-**Scene**
-- `NetworkManager` with transport (Unity Transport / Relay)
-- Baked NavMesh for the enemies
-- `ScoreManager` GameObject with `NetworkObject` (in-scene) and the Score Canvas (its `TextMeshProUGUI` assigned to `ScoreManager.scoreText`)
-
-## 10. Common mistakes
-
-- Writing a `NetworkVariable` from a client that has no write permission (error in Console).
-- Using `IsOwner`/`IsServer` in `Awake`/`Start` (not set yet) – use `OnNetworkSpawn`.
-- Forgetting to unsubscribe `OnValueChanged` in `OnNetworkDespawn`.
-- Prefab without `NetworkObject` or not in the network prefabs list.
-- Running AI or gameplay logic on every client instead of only the server.
-- Accessing `NetworkManager.Singleton.LocalClient.PlayerObject` before it spawns, or after disconnect (null).
-- Trusting client input in a `[ServerRpc]` without validation.
-
-## 11. Testing
-
-- Unity Editor as host + a build (`Build/`) as client, or use **Multiplayer Play Mode** (Window → Multiplayer Play Mode).
-- Host creates the session; copy the join code into the client input and press join.
-- Check: names appear above all players, health decreases when the enemy attacks, enemies move identically on all clients, the score shows the same value on host and clients (a late-joining client sees the current score).
-
-## 12. References
-
-- [NGO documentation](https://docs-multiplayer.unity3d.com/netcode/current/about/)
-- [NetworkVariable](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkvariable/)
-- [RPCs](https://docs-multiplayer.unity3d.com/netcode/current/advanced-topics/message-system/rpc/)
-- See also `MULTIPLAYER_DEVELOPMENT_GUIDE.md` in the repository root.
+- [Netcode for GameObjects manual (2.13)](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html)
+- [NetworkVariables](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html)
+- [RPCs](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html)
+- [Unity Multiplayer Services documentation](https://docs.unity.com/mps)
+- [Unity Multiplayer Play Mode documentation](https://docs.unity3d.com/Packages/com.unity.multiplayer.playmode@2.0/manual/index.html)
