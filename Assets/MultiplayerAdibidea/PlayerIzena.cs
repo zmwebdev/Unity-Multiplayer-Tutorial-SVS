@@ -27,13 +27,13 @@ public class PlayerIzena : NetworkBehaviour
     public void SetMyName(string name)
     {
         if (IsOwner)
-            SubmitNameServerRpc(name);
+            SubmitNameRpc(name);
     }
 
-    [ServerRpc]
-    private void SubmitNameServerRpc(string name)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    private void SubmitNameRpc(FixedString64Bytes name)
     {
-        playerName.Value = new FixedString64Bytes(name);
+        playerName.Value = name;
     }
 
     private void OnNameChanged(FixedString64Bytes previous, FixedString64Bytes current)
