@@ -141,12 +141,4 @@ public class SimpleAttackBehavior : NetworkBehaviour
 #endif
         }
     }
-
-    // Helper: Range barruan gaude?
-    public bool IsInAttackRange()
-    {
-        if (targetToAttack == null) return false;
-        float distance = Vector3.Distance(transform.position, targetToAttack.position);
-        return distance <= attackRange;
-    }
 }

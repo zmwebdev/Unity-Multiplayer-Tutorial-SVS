@@ -110,17 +110,4 @@ public class SimpleChaseBehavior : NetworkBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, 0.5f);
     }
-
-    // Helper: Distantzia eskuratu (beste script-etarako)
-    public float GetDistanceToTarget()
-    {
-        if (targetToChase == null) return float.MaxValue;
-        return Vector3.Distance(transform.position, targetToChase.position);
-    }
-
-    // Helper: Target-era heldu garen?
-    public bool HasReachedTarget()
-    {
-        return GetDistanceToTarget() <= stopDistance;
-    }
 }

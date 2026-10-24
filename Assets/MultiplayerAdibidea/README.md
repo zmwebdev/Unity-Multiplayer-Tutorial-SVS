@@ -116,7 +116,7 @@ An **RPC** (remote procedure call) asks NGO to run a method on another machine. 
 
 NGO 2.x supports the unified `[Rpc]` API. For example, a client can request that the server perform an action using an RPC targeted at the server. The server should validate the request before changing important game state. The exact permissions and target should match the action and object ownership.
 
-All RPCs in this scene use the unified `[Rpc]` form; there are no legacy `[ServerRpc]` or `[ClientRpc]` methods. In `PlayerIzena`, the owning client submits a name to the server with `[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]`, and the server writes it to a `NetworkVariable` that delivers the name to everyone. `ScoreManager` also shows a server-targeted `AddScoreRpc` and a `ScoreFeedbackRpc` sent to clients and the host. Name RPC methods with the `Rpc` suffix, and choose the target and invoke permission to suit the operation.
+The RPC example in this scene uses the unified `[Rpc]` form; there are no legacy `[ServerRpc]` or `[ClientRpc]` methods. In `PlayerIzena`, the owning client submits a name to the server with `[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]`, and the server writes it to a `NetworkVariable` that delivers the name to everyone. Name RPC methods with the `Rpc` suffix, and choose the target and invoke permission to suit the operation.
 
 | Need | Suitable tool |
 | --- | --- |

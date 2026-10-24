@@ -40,25 +40,4 @@ public class ScoreManager : NetworkBehaviour
         if (!IsServer) return;
         TotalScore.Value += amount;
     }
-
-    // Client asks the server to add score
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void AddScoreRpc(int amount)
-    {
-        TotalScore.Value += amount;
-    }
-
-    // Server tells every client about a one-off event
-    [Rpc(SendTo.ClientsAndHost)]
-    private void ScoreFeedbackRpc(int amount)
-    {
-        Debug.Log($"+{amount} points!");
-    }
-
-    public void AddScoreWithFeedback(int amount)
-    {
-        if (!IsServer) return;
-        TotalScore.Value += amount;
-        ScoreFeedbackRpc(amount);
-    }
 }
