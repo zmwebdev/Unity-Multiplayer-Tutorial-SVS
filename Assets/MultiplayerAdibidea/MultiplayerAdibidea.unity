@@ -2127,12 +2127,21 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'TODO:
 
-    - NPC mugimendua
+    - Leaderboard (Player izena eta bere datuak ordenatuta)
 
-    - Score bat jarri
+    -
+    Jokoaren egoera gorde JSON batean
 
-    - WebGL (itchio):
-    Websocket aktibatu!
+    - NetworkAnimator
+
+    - Scene aldatu
+    multiplayer
+
+    - NPC (Patrol, Chase, Attack) + FSM (Behavior Tree)
+
+
+    -
+    WebGL (itchio): Websocket aktibatu!
 
 '
   m_isRightToLeft: 0
