@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -15,14 +14,6 @@ public class PlayerHealth : NetworkBehaviour
         0f,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
-
-    public float MaxHealth => maxHealth;
-    public float CurrentHealth => currentHealth.Value;
-    public bool IsDead => currentHealth.Value <= 0f;
-
-    // (previous, current) - useful for UI health bars on every client
-    public event Action<float, float> OnHealthChanged;
-    public event Action OnDied;
 
     public override void OnNetworkSpawn()
     {
@@ -47,7 +38,7 @@ public class PlayerHealth : NetworkBehaviour
     // Server only: clients must never modify health directly.
     public void TakeDamage(float amount)
     {
-        if (!IsServer || IsDead || amount <= 0f)
+        if (!IsServer || currentHealth.Value <= 0f || amount <= 0f)
             return;
 
         float before = currentHealth.Value;
@@ -58,30 +49,12 @@ public class PlayerHealth : NetworkBehaviour
             ScoreManager.Instance.AddScore(-Mathf.RoundToInt(realDamage));
     }
 
-    public void Heal(float amount)
-    {
-        if (!IsServer || IsDead || amount <= 0f)
-            return;
-
-        currentHealth.Value = Mathf.Min(maxHealth, currentHealth.Value + amount);
-    }
-
-    public void ResetHealth()
-    {
-        if (IsServer)
-            currentHealth.Value = maxHealth;
-    }
-
-    private void HandleHealthChanged(float previous, float current)
+    private void HandleHealthChanged(float _, float current)
     {
         UpdateLabel(current);
-        OnHealthChanged?.Invoke(previous, current);
 
         if (IsServer)
             LeaderboardManager.Instance?.SetHealth(OwnerClientId, current, maxHealth);
-
-        if (previous > 0f && current <= 0f)
-            OnDied?.Invoke();
     }
 
     private void UpdateLabel(float health)

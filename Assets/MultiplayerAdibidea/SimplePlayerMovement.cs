@@ -117,34 +117,4 @@ public class SimplePlayerMovement : MonoBehaviour
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, 0.5f);
     }
-
-    // Helper methods (optional)
-
-    /// <summary>
-    /// Get current move input (for other scripts)
-    /// Oraingo move input-a lortu (beste script-entzat)
-    /// </summary>
-    public Vector2 GetMoveInput()
-    {
-        return moveInput;
-    }
-
-    /// <summary>
-    /// Is player moving?
-    /// Jokalaria mugitzen ari da?
-    /// </summary>
-    public bool IsMoving()
-    {
-        return moveInput.magnitude >= 0.1f;
-    }
-
-    /// <summary>
-    /// Get movement direction in world space
-    /// Mugimenduko norabidea world space-n lortu
-    /// </summary>
-    public Vector3 GetMovementDirection()
-    {
-        if (moveInput.magnitude < 0.1f) return Vector3.zero;
-        return new Vector3(moveInput.x, 0f, moveInput.y).normalized;
-    }
 }

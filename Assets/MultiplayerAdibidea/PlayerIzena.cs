@@ -31,7 +31,7 @@ public class PlayerIzena : NetworkBehaviour
 
         // The name may have been typed before this player object existed.
         if (IsOwner && !string.IsNullOrWhiteSpace(DesiredName))
-            SubmitNameServerRpc(DesiredName);
+            SubmitNameRpc(DesiredName);
     }
 
     public override void OnNetworkDespawn()
@@ -43,11 +43,11 @@ public class PlayerIzena : NetworkBehaviour
     public void SetMyName(string name)
     {
         if (IsOwner)
-            SubmitNameServerRpc(name);
+            SubmitNameRpc(name);
     }
 
-    [ServerRpc]
-    private void SubmitNameServerRpc(string name)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    private void SubmitNameRpc(string name)
     {
         // Never trust the client: sanitize and fall back to a default name.
         name = name == null ? string.Empty : name.Trim();
@@ -56,7 +56,11 @@ public class PlayerIzena : NetworkBehaviour
         if (name.Length > MaxNameLength)
             name = name.Substring(0, MaxNameLength);
 
-        playerName.Value = new FixedString64Bytes(name);
+        FixedString64Bytes fixedName = default;
+        fixedName.CopyFromTruncated(name);
+        name = fixedName.ToString();
+
+        playerName.Value = fixedName;
         LeaderboardManager.Instance?.SetName(OwnerClientId, name);
     }
 
