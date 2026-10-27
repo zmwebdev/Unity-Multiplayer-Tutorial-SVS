@@ -40,6 +40,7 @@ public class GameKudeatzaile : NetworkBehaviour
         }
 
         pendingPlayerName = playerNameInput.text;
+        PlayerIzena.DesiredName = pendingPlayerName;
 
         networkManager = NetworkManager.Singleton;
         if (networkManager == null)
@@ -90,6 +91,7 @@ public class GameKudeatzaile : NetworkBehaviour
     private void OnPlayerNameInputChanged(string newName)
     {
         pendingPlayerName = newName;
+        PlayerIzena.DesiredName = newName;
 
         NetworkManager manager = NetworkManager.Singleton;
         if (manager == null || !manager.IsClient || manager.LocalClient == null)

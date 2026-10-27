@@ -30,12 +30,18 @@ public class PlayerHealth : NetworkBehaviour
         UpdateLabel(currentHealth.Value);
 
         if (IsServer)
+        {
             currentHealth.Value = maxHealth;
+            LeaderboardManager.Instance?.SetHealth(OwnerClientId, currentHealth.Value, maxHealth);
+        }
     }
 
     public override void OnNetworkDespawn()
     {
         currentHealth.OnValueChanged -= HandleHealthChanged;
+
+        if (IsServer)
+            LeaderboardManager.Instance?.Remove(OwnerClientId);
     }
 
     // Server only: clients must never modify health directly.
@@ -70,6 +76,9 @@ public class PlayerHealth : NetworkBehaviour
     {
         UpdateLabel(current);
         OnHealthChanged?.Invoke(previous, current);
+
+        if (IsServer)
+            LeaderboardManager.Instance?.SetHealth(OwnerClientId, current, maxHealth);
 
         if (previous > 0f && current <= 0f)
             OnDied?.Invoke();
